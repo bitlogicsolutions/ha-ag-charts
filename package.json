@@ -6,11 +6,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "update": "YARN_REGISTRY=\"http://52.50.158.57:4873\" npx yarn",
-    "build": "npx esbuild --bundle ./ag-charts.ts --minify --outfile=dist/ag-charts.js",
-    "deploy": "cp -R dist/ /Volumes/config/www/personal/ha-ag-charts/dist/"
+    "build": "npx esbuild --bundle ./ag-charts.ts --minify --outfile=dist/ag-charts.js"
   },
   "dependencies": {
-    "ag-charts-enterprise": "^11.1.1"
+    "ag-charts-enterprise": "^11.2.1"
   }
 }
