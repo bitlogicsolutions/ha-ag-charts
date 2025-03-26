@@ -1,4 +1,4 @@
-# HomeAssistant AG Charts Frontend Component
+# Home Assistant AG Charts Card
 
 ## Installation
 
