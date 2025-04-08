@@ -16,11 +16,11 @@ export async function updateData(context: Context, hass: Hass) {
     },
   } = context;
 
-  const timeSinceLastUpdate = Date.now() - this.lastUpdateData;
+  const timeSinceLastUpdate = Date.now() - context.lastUpdateData;
   if (timeSinceLastUpdate < refresh * 1_000) {
     return;
   }
-  this.lastUpdateData = Date.now();
+  context.lastUpdateData = Date.now();
 
   const data: any[] = [];
   if (entities?.length > 0) {
@@ -70,7 +70,7 @@ export async function updateData(context: Context, hass: Hass) {
         dataEntry[key(entity)] = (mean ?? state) * (entity.yMultiplier ?? 1);
       }
 
-      this.entities.set(key(entity), hass.states[entity.entity]);
+      context.entities.set(key(entity), hass.states[entity.entity]);
     }
   }
 

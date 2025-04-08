@@ -16,6 +16,7 @@ class HAAgCharts extends HTMLElement {
   elements?: { rootDiv: HTMLElement; containerDiv: HTMLElement };
   config: Config;
   entities: Map<string, HassEntity> = new Map();
+  lastUpdateData = -Infinity;
 
   private phase: "init" | "ready" = "init";
 
@@ -44,7 +45,6 @@ class HAAgCharts extends HTMLElement {
     this.updateData(hass);
   }
 
-  private lastUpdateData = -Infinity;
   async updateData(hass: Hass) {
     await this.chartInstance?.updateDelta({
       data: await updateData(this, hass),
