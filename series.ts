@@ -72,6 +72,9 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     title: { text: title },
     series: generateSeriesOpts(context, hass) as any[],
     minWidth: 0,
+    tooltip: {
+      mode: "shared",
+    },
     ...optionalConfig,
   };
   return options;
