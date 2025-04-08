@@ -1,6 +1,6 @@
-import { ParsedEntity } from "./types";
+import { ConfigEntity } from "./types";
 
-export function performAction(entity: ParsedEntity, element: HTMLElement) {
+export function performAction(entity: ConfigEntity, element: HTMLElement) {
   switch (entity.action ?? "more-info") {
     case "more-info":
       actionInfo(entity, element);
@@ -13,7 +13,7 @@ export function performAction(entity: ParsedEntity, element: HTMLElement) {
   }
 }
 
-export function actionNavigate(entity: ParsedEntity) {
+export function actionNavigate(entity: ConfigEntity) {
   history.pushState(null, "", entity.path);
 
   window.dispatchEvent(
@@ -25,7 +25,7 @@ export function actionNavigate(entity: ParsedEntity) {
   );
 }
 
-export function actionInfo(entity: ParsedEntity, element: HTMLElement) {
+export function actionInfo(entity: ConfigEntity, element: HTMLElement) {
   const event = new Event("hass-more-info", {
     bubbles: true,
     cancelable: true,

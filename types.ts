@@ -26,9 +26,7 @@ export type ConfigEntity = {
   stroke?: string;
 };
 
-export type Entity =
-  | string
-  | ConfigEntity;
+export type Entity = string | ConfigEntity;
 
 export interface PieSeries {
   type: "pie";
@@ -63,4 +61,10 @@ export type HassEntity = {
     friendly_name?: string;
     unit_of_measurement?: string;
   };
+};
+
+export type Context = {
+  config: Config;
+  elements?: { rootDiv: HTMLElement; containerDiv: HTMLElement };
+  entities: Map<string, HassEntity>;
 };
