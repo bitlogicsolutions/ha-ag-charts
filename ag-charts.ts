@@ -3,6 +3,7 @@ import { Config, Hass, HassEntity } from './types';
 import { setupDOM } from './dom';
 import { buildSeriesConfig } from './series';
 import { updateData } from './data';
+import { CONFIG_SCHEMA } from './config-schema';
 
 console.info(
   `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.0.1`,
@@ -20,9 +21,25 @@ class HAAgCharts extends HTMLElement {
 
   private phase: 'init' | 'ready' = 'init';
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
+  static getConfigElement() {
+    return document.createElement('ha-form');
+  }
+
+  static getStubConfig(hass: Hass) {
+    return {
+      title: 'AG Charts',
+      theme: 'ag-default-dark',
+      series: [
+        {
+          type: 'line',
+          entities: [
+            {
+              entity: Object.keys(hass.states)[0],
+            },
+          ],
+        },
+      ],
+    };
   }
 
   setConfig(config: Config) {
@@ -56,4 +73,14 @@ class HAAgCharts extends HTMLElement {
   }
 }
 
-customElements.define('ag-charts', HAAgCharts);
+customElements.define('ha-ag-charts', HAAgCharts);
+
+(window as any).customCards = (window as any).customCards || [];
+(window as any).customCards.push({
+  type: 'ha-ag-charts',
+  name: 'AG Charts',
+  description: 'Display data using AG Charts',
+  preview: true,
+  documentationURL: 'https://github.com/bitlogicsolutions/ha-ag-charts',
+  configSchema: CONFIG_SCHEMA,
+});
