@@ -3,3 +3,9 @@
 - This project is a Home Assistant frontend integration, providing a chart-rendering dashboard UI component for statistics recorded by Home Assistant.
 - It's aim is to allow use of the AG Charts product within HomeAssistant dashboard, primarily by using NPM packages ag-charts-community and ag-charts-enterprise.
 - It is published through HACS.
+
+# Tooling
+
+- The project is using package.json scripts to launch common tooling commands.
+- We are using ESBuild to bundle the application.
+- Built artifacts are kept in dist/ and committed to the repo for publishing.
