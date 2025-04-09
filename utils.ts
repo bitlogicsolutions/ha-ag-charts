@@ -1,4 +1,4 @@
-import { ConfigEntity, Entity, Hass, HassEntity } from "./types";
+import { ConfigEntity, Entity, Hass, HassEntity } from './types';
 
 export function appendUnknownValue(
   totalValue: number,
@@ -11,35 +11,23 @@ export function appendUnknownValue(
   );
   if (unknownValue > 0) {
     data.push(
-      syntheticDatum(
-        unknownName,
-        unknownValue,
-        data[0].entity?.attributes?.unit_of_measurement
-      )
+      syntheticDatum(unknownName, unknownValue, data[0].entity?.attributes?.unit_of_measurement)
     );
   }
 }
 
-export function formatValue(
-  value: number,
-  entity: HassEntity,
-  config?: Entity
-) {
-  if (typeof config === "object" && config?.yUnits) {
+export function formatValue(value: number, entity: HassEntity, config?: Entity) {
+  if (typeof config === 'object' && config?.yUnits) {
     return `${value}${config?.yUnits}`;
   }
-  const { unit_of_measurement: unit = "" } = entity?.attributes ?? {};
+  const { unit_of_measurement: unit = '' } = entity?.attributes ?? {};
 
   value = Math.round(value);
 
   return `${value}${unit}`;
 }
 
-export function formatPieTooltip(
-  name: string,
-  value: number,
-  entity: HassEntity
-) {
+export function formatPieTooltip(name: string, value: number, entity: HassEntity) {
   return { title: name, content: formatValue(value, entity) };
 }
 
@@ -55,32 +43,21 @@ export function syntheticDatum(name: string, value: number, uom?: string) {
   };
 }
 
-export function readEntityConfig(
-  hass: Hass,
-  configEntity: Entity
-): ConfigEntity {
-  if (typeof configEntity === "string") {
+export function readEntityConfig(hass: Hass, configEntity: Entity): ConfigEntity {
+  if (typeof configEntity === 'string') {
     return {
       entity: configEntity,
-      name:
-        hass?.states[configEntity]?.attributes?.friendly_name ?? configEntity,
-      action: "more-info",
+      name: hass?.states[configEntity]?.attributes?.friendly_name ?? configEntity,
+      action: 'more-info',
       offsetXs: 0,
       yMultiplier: 1,
     };
   }
 
-  const {
-    entity,
-    name,
-    action,
-    offsetXs = 0,
-    yMultiplier = 1,
-    ...config
-  } = configEntity;
+  const { entity, name, action, offsetXs = 0, yMultiplier = 1, ...config } = configEntity;
   return {
     name: name ?? hass?.states[entity]?.attributes?.friendly_name ?? entity,
-    action: action ?? "more-info",
+    action: action ?? 'more-info',
     entity,
     offsetXs,
     yMultiplier,
@@ -89,9 +66,9 @@ export function readEntityConfig(
 }
 
 export function key({ entity }: ConfigEntity) {
-  return entity?.replace(/\./, "__");
+  return entity?.replace(/\./, '__');
 }
 
 export function unitOfMeasurement(hass: Hass, { entity }: ConfigEntity) {
-  return hass?.states[entity]?.attributes?.unit_of_measurement ?? "?";
+  return hass?.states[entity]?.attributes?.unit_of_measurement ?? '?';
 }

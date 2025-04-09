@@ -6,28 +6,15 @@ import {
   AgChartThemeName,
   AgLineSeriesOptions,
   AgPieSeriesOptions,
-} from "ag-charts-enterprise";
-import { CartesianSeries, Context, Hass, PieSeries } from "./types";
-import {
-  readEntityConfig,
-  unitOfMeasurement,
-  key,
-  formatPieTooltip,
-  formatValue,
-} from "./utils";
-import { performAction } from "./actions";
+} from 'ag-charts-enterprise';
+import { CartesianSeries, Context, Hass, PieSeries } from './types';
+import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue } from './utils';
+import { performAction } from './actions';
 
 export function buildSeriesConfig(context: Context, hass: Hass) {
-  const {
-    config: { series = [], legend, theme = "ag-default-dark", title } = {},
-  } = context;
-  let optionalConfig: Pick<
-    AgCartesianChartOptions,
-    "axes" | "zoom" | "legend"
-  > = {};
-  const cartesianSeries = series.filter(
-    (s): s is CartesianSeries => s.type != "pie"
-  );
+  const { config: { series = [], legend, theme = 'ag-default-dark', title } = {} } = context;
+  let optionalConfig: Pick<AgCartesianChartOptions, 'axes' | 'zoom' | 'legend'> = {};
+  const cartesianSeries = series.filter((s): s is CartesianSeries => s.type != 'pie');
   const uom = new Map();
   for (const { entities = [], minY, maxY } of cartesianSeries) {
     for (const config of entities) {
@@ -40,14 +27,14 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
       }
     }
 
-    optionalConfig.axes = [{ type: "ordinal-time", position: "bottom" }];
+    optionalConfig.axes = [{ type: 'ordinal-time', position: 'bottom' }];
     for (const [unit, keys] of uom.entries()) {
       optionalConfig.axes.push({
-        type: "number",
-        position: "left",
-        min: typeof minY === "number" ? minY : undefined,
-        max: typeof maxY === "number" ? maxY : undefined,
-        nice: typeof minY !== "number" && typeof maxY !== "number",
+        type: 'number',
+        position: 'left',
+        min: typeof minY === 'number' ? minY : undefined,
+        max: typeof maxY === 'number' ? maxY : undefined,
+        nice: typeof minY !== 'number' && typeof maxY !== 'number',
         keys,
         label: { format: `#{0>1.1f}${unit}` },
       });
@@ -58,7 +45,7 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     optionalConfig.zoom = {};
   }
 
-  if (legend === "none") {
+  if (legend === 'none') {
     optionalConfig.legend = { enabled: false };
   } else if (legend != null) {
     optionalConfig.legend = { position: legend };
@@ -72,7 +59,7 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     series: generateSeriesOpts(context, hass) as any[],
     minWidth: 0,
     tooltip: {
-      mode: "shared",
+      mode: 'shared',
     },
     ...optionalConfig,
   };
@@ -88,16 +75,14 @@ function generateSeriesOpts(context: Context, hass: Hass) {
     | AgAreaSeriesOptions
     | AgPieSeriesOptions
   )[] = [];
-  const cartesianSeries = series.filter(
-    (s): s is CartesianSeries => s.type !== "pie"
-  );
-  const pieSeries = series.filter((s): s is PieSeries => s.type === "pie");
+  const cartesianSeries = series.filter((s): s is CartesianSeries => s.type !== 'pie');
+  const pieSeries = series.filter((s): s is PieSeries => s.type === 'pie');
   for (const series of cartesianSeries) {
     const { type, entities = [], stacked } = series;
     switch (type) {
-      case "line":
-      case "bar":
-      case "area":
+      case 'line':
+      case 'bar':
+      case 'area':
         for (const entityConfig of entities) {
           const entity = readEntityConfig(hass, entityConfig);
           const optional: any = {};
@@ -105,13 +90,12 @@ function generateSeriesOpts(context: Context, hass: Hass) {
           if (entity.stroke) optional.stroke = entity.stroke;
           seriesOpts.push({
             type,
-            xKey: "key",
+            xKey: 'key',
             yKey: key(entity),
             yName: entity.name,
             stacked,
             listeners: {
-              nodeClick: () =>
-                performAction(entity, context.elements?.rootDiv!),
+              nodeClick: () => performAction(entity, context.elements?.rootDiv!),
             },
             ...optional,
           } satisfies AgBarSeriesOptions | AgLineSeriesOptions | AgAreaSeriesOptions);
@@ -119,29 +103,26 @@ function generateSeriesOpts(context: Context, hass: Hass) {
         break;
 
       default:
-        throw new Error("type not recognised: " + type);
+        throw new Error('type not recognised: ' + type);
     }
   }
 
   for (const { type } of pieSeries) {
     switch (type) {
-      case "pie":
+      case 'pie':
         seriesOpts.push({
-          type: "pie",
-          calloutLabelKey: "name",
-          angleKey: "value",
-          sectorLabelKey: "value",
+          type: 'pie',
+          calloutLabelKey: 'name',
+          angleKey: 'value',
+          sectorLabelKey: 'value',
           sectorLabel: {
-            formatter: ({ datum: { value, entity } }) =>
-              formatValue(value, entity),
+            formatter: ({ datum: { value, entity } }) => formatValue(value, entity),
           },
           tooltip: {
-            renderer: ({ datum: { name, value, entity } }) =>
-              formatPieTooltip(name, value, entity),
+            renderer: ({ datum: { name, value, entity } }) => formatPieTooltip(name, value, entity),
           },
           listeners: {
-            nodeClick: ({ datum }) =>
-              performAction(datum.config, context.elements?.rootDiv!),
+            nodeClick: ({ datum }) => performAction(datum.config, context.elements?.rootDiv!),
           },
         });
         break;

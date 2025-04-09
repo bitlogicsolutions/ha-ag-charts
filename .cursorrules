@@ -7,5 +7,6 @@
 # Tooling
 
 - The project is using package.json scripts to launch common tooling commands.
+- The project is using Yarn rather than NPM.
 - We are using ESBuild to bundle the application.
 - Built artifacts are kept in dist/ and committed to the repo for publishing.

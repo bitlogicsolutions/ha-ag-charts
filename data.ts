@@ -1,16 +1,16 @@
-import { fetchStatistics } from "./stats";
-import { CartesianSeries, Context, Hass } from "./types";
-import { appendUnknownValue, key, readEntityConfig } from "./utils";
+import { fetchStatistics } from './stats';
+import { CartesianSeries, Context, Hass } from './types';
+import { appendUnknownValue, key, readEntityConfig } from './utils';
 
 export async function updateData(context: Context, hass: Hass) {
   const {
     config: {
-      interval = "5minute",
+      interval = '5minute',
       period = 1,
       entities = [],
       total,
       totalMultiplier = 1,
-      unknownName = "Unknown",
+      unknownName = 'Unknown',
       series = [],
       refresh = 5,
     } = {},
@@ -25,7 +25,7 @@ export async function updateData(context: Context, hass: Hass) {
   const data: any[] = [];
   if (entities?.length > 0) {
     data.push(
-      ...entities.map((c) => {
+      ...entities.map(c => {
         const e = readEntityConfig(hass, c);
         return {
           name: e.name,
@@ -37,16 +37,13 @@ export async function updateData(context: Context, hass: Hass) {
     );
 
     if (total) {
-      const totalValue =
-        Number(hass.states[total]?.state ?? 0) * totalMultiplier;
+      const totalValue = Number(hass.states[total]?.state ?? 0) * totalMultiplier;
       appendUnknownValue(totalValue, data, unknownName);
     }
   }
 
   const dataMap = new Map();
-  const cartesianSeries = series.filter(
-    (s): s is CartesianSeries => s.type !== "pie"
-  );
+  const cartesianSeries = series.filter((s): s is CartesianSeries => s.type !== 'pie');
   for (const { entities } of cartesianSeries ?? []) {
     for (const config of entities ?? []) {
       const entity = readEntityConfig(hass, config);

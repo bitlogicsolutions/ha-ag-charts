@@ -1,4 +1,4 @@
-import { AgChartThemeName } from "ag-charts-enterprise";
+import { AgChartThemeName } from 'ag-charts-enterprise';
 
 export interface Config {
   title: string;
@@ -6,9 +6,9 @@ export interface Config {
   series: Series[];
   entities: Entity[];
   refresh?: number;
-  interval?: "5minutes";
+  interval?: '5minutes';
   period?: number;
-  legend?: "left" | "right" | "top" | "bottom" | "none";
+  legend?: 'left' | 'right' | 'top' | 'bottom' | 'none';
   total?: string;
   totalMultiplier?: number;
   unknownName?: string;
@@ -17,7 +17,7 @@ export interface Config {
 export type ConfigEntity = {
   entity: string;
   name?: string;
-  action?: "more-info" | "navigate";
+  action?: 'more-info' | 'navigate';
   path?: string;
   offsetXs?: number;
   yMultiplier?: number;
@@ -29,11 +29,11 @@ export type ConfigEntity = {
 export type Entity = string | ConfigEntity;
 
 export interface PieSeries {
-  type: "pie";
+  type: 'pie';
 }
 
 export interface CartesianSeries {
-  type: "area" | "bar" | "line";
+  type: 'area' | 'bar' | 'line';
   entities: Entity[];
   stacked?: boolean;
   minY?: number;

@@ -31,23 +31,20 @@ const DOM = `
 export function setupDOM(parent: HTMLElement) {
   const { shadowRoot } = parent;
 
-  const rootDiv = document.createElement("div");
+  const rootDiv = document.createElement('div');
   rootDiv.innerHTML = DOM;
   shadowRoot?.append(rootDiv);
 
-  const contentDiv = rootDiv.querySelector("#content")!;
-  const fsDiv = rootDiv.querySelector("#fs")!;
-  fsDiv.addEventListener("click", () => {
-    contentDiv.classList.toggle("full-screen", true);
-    contentDiv.requestFullscreen({ navigationUI: "auto" });
+  const contentDiv = rootDiv.querySelector('#content')!;
+  const fsDiv = rootDiv.querySelector('#fs')!;
+  fsDiv.addEventListener('click', () => {
+    contentDiv.classList.toggle('full-screen', true);
+    contentDiv.requestFullscreen({ navigationUI: 'auto' });
   });
-  rootDiv.addEventListener("fullscreenchange", () => {
-    contentDiv.classList.toggle(
-      "full-screen",
-      document.fullscreenElement != null
-    );
+  rootDiv.addEventListener('fullscreenchange', () => {
+    contentDiv.classList.toggle('full-screen', document.fullscreenElement != null);
   });
 
-  const containerDiv = rootDiv.querySelector("#container")! as HTMLElement;
+  const containerDiv = rootDiv.querySelector('#container')! as HTMLElement;
   return { rootDiv, containerDiv };
 }

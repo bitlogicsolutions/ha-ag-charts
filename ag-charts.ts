@@ -1,14 +1,14 @@
-import { AgChartInstance, AgCharts } from "ag-charts-enterprise";
-import { Config, Hass, HassEntity } from "./types";
-import { setupDOM } from "./dom";
-import { buildSeriesConfig } from "./series";
-import { updateData } from "./data";
+import { AgChartInstance, AgCharts } from 'ag-charts-enterprise';
+import { Config, Hass, HassEntity } from './types';
+import { setupDOM } from './dom';
+import { buildSeriesConfig } from './series';
+import { updateData } from './data';
 
 console.info(
   `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.0.1`,
-  "color: white; background: blue; font-weight: bold;",
-  "color: blue; background: white; font-weight: bold;",
-  ""
+  'color: white; background: blue; font-weight: bold;',
+  'color: blue; background: white; font-weight: bold;',
+  ''
 );
 
 class HAAgCharts extends HTMLElement {
@@ -18,16 +18,16 @@ class HAAgCharts extends HTMLElement {
   entities: Map<string, HassEntity> = new Map();
   lastUpdateData = -Infinity;
 
-  private phase: "init" | "ready" = "init";
+  private phase: 'init' | 'ready' = 'init';
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode: 'open' });
   }
 
   setConfig(config: Config) {
     if (!config.entities && !config.series) {
-      throw new Error("You need to define entities and/or series");
+      throw new Error('You need to define entities and/or series');
     }
     this.config = config;
 
@@ -37,9 +37,9 @@ class HAAgCharts extends HTMLElement {
   }
 
   set hass(hass: Hass) {
-    if (this.phase === "init") {
+    if (this.phase === 'init') {
       this.chartInstance = AgCharts.create(buildSeriesConfig(this, hass));
-      this.phase = "ready";
+      this.phase = 'ready';
     }
 
     this.updateData(hass);
@@ -56,4 +56,4 @@ class HAAgCharts extends HTMLElement {
   }
 }
 
-customElements.define("ag-charts", HAAgCharts);
+customElements.define('ag-charts', HAAgCharts);

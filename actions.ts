@@ -1,11 +1,11 @@
-import { ConfigEntity } from "./types";
+import { ConfigEntity } from './types';
 
 export function performAction(entity: ConfigEntity, element: HTMLElement) {
-  switch (entity.action ?? "more-info") {
-    case "more-info":
+  switch (entity.action ?? 'more-info') {
+    case 'more-info':
       actionInfo(entity, element);
       break;
-    case "navigate":
+    case 'navigate':
       actionNavigate(entity);
       break;
     default:
@@ -14,10 +14,10 @@ export function performAction(entity: ConfigEntity, element: HTMLElement) {
 }
 
 export function actionNavigate(entity: ConfigEntity) {
-  history.pushState(null, "", entity.path);
+  history.pushState(null, '', entity.path);
 
   window.dispatchEvent(
-    new Event("location-changed", {
+    new Event('location-changed', {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -26,7 +26,7 @@ export function actionNavigate(entity: ConfigEntity) {
 }
 
 export function actionInfo(entity: ConfigEntity, element: HTMLElement) {
-  const event = new Event("hass-more-info", {
+  const event = new Event('hass-more-info', {
     bubbles: true,
     cancelable: true,
     composed: true,

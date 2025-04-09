@@ -1,7 +1,7 @@
 {
-    "name": "AG Charts Card",
-    "content_in_root": false,
-    "render_readme": true,
-    "filename": "ag-charts.js",
-    "homeassistant": "2025.3.0"
-  }
+  "name": "AG Charts Card",
+  "content_in_root": false,
+  "render_readme": true,
+  "filename": "ag-charts.js",
+  "homeassistant": "2025.3.0"
+}
