@@ -64,7 +64,7 @@ export type HassEntity = {
 };
 
 export type Context = {
-  config: Config;
+  config?: Config;
   elements?: { rootDiv: HTMLElement; containerDiv: HTMLElement };
   entities: Map<string, HassEntity>;
   lastUpdateData: number;

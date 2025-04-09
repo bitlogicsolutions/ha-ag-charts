@@ -14,7 +14,7 @@ console.info(
 class HAAgCharts extends HTMLElement {
   private chartInstance?: AgChartInstance;
   elements?: { rootDiv: HTMLElement; containerDiv: HTMLElement };
-  config: Config;
+  config?: Config;
   entities: Map<string, HassEntity> = new Map();
   lastUpdateData = -Infinity;
 

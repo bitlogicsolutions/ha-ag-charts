@@ -7,13 +7,13 @@ export async function updateData(context: Context, hass: Hass) {
     config: {
       interval = "5minute",
       period = 1,
-      entities,
+      entities = [],
       total,
       totalMultiplier = 1,
       unknownName = "Unknown",
-      series,
+      series = [],
       refresh = 5,
-    },
+    } = {},
   } = context;
 
   const timeSinceLastUpdate = Date.now() - context.lastUpdateData;
@@ -58,7 +58,7 @@ export async function updateData(context: Context, hass: Hass) {
         interval
       );
 
-      for (const { start, end, min, mean, max, state } of stats) {
+      for (const { start, end, min, mean, max, state } of stats ?? []) {
         let x = start + (entity.offsetXs ?? 0) * 1_000;
         let dataEntry = dataMap.get(x);
         if (dataEntry == null) {

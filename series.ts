@@ -19,7 +19,7 @@ import { performAction } from "./actions";
 
 export function buildSeriesConfig(context: Context, hass: Hass) {
   const {
-    config: { series, legend, theme = "ag-default-dark", title },
+    config: { series = [], legend, theme = "ag-default-dark", title } = {},
   } = context;
   let optionalConfig: Pick<
     AgCartesianChartOptions,
@@ -80,7 +80,7 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
 }
 
 function generateSeriesOpts(context: Context, hass: Hass) {
-  const { series = [] } = context.config;
+  const { series = [] } = context.config ?? {};
 
   const seriesOpts: (
     | AgBarSeriesOptions

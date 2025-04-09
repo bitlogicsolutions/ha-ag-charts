@@ -1,5 +1,14 @@
 import { Hass } from "./types";
 
+export type Statistics = {
+  start: string;
+  end: string;
+  min: number;
+  mean: number;
+  max: number;
+  state: number;
+};
+
 export async function fetchRecent(
   hass: Hass,
   entityId: string,
@@ -22,14 +31,14 @@ export async function fetchStatistics(
   start: Date,
   end: Date,
   period = "5minute"
-) {
-  const statistics = await hass.callWS({
+): Promise<Statistics[] | undefined> {
+  const statistics = (await hass.callWS({
     type: "recorder/statistics_during_period",
     start_time: start?.toISOString(),
     end_time: end?.toISOString(),
     statistic_ids: [entityId],
     period,
-  });
+  })) as Record<string, Statistics[]>;
   if (statistics && entityId in statistics) {
     return statistics[entityId];
   }

@@ -6,9 +6,14 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "npx esbuild --bundle ./ag-charts.ts --minify --outfile=dist/ag-charts.js"
+    "build": "tsc --noEmit && npx esbuild --bundle ./ag-charts.ts --minify --outfile=dist/ag-charts.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "ag-charts-enterprise": "^11.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.24"
   }
 }
