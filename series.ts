@@ -12,7 +12,6 @@ import {
   readEntityConfig,
   unitOfMeasurement,
   key,
-  formatCartesianTooltip,
   formatPieTooltip,
   formatValue,
 } from "./utils";
@@ -110,16 +109,6 @@ function generateSeriesOpts(context: Context, hass: Hass) {
             yKey: key(entity),
             yName: entity.name,
             stacked,
-            tooltip: {
-              renderer: ({ datum, xKey, yKey }) =>
-                formatCartesianTooltip(
-                  entity.name!,
-                  datum[xKey],
-                  datum[yKey],
-                  context.entities[yKey],
-                  entity
-                ),
-            },
             listeners: {
               nodeClick: () =>
                 performAction(entity, context.elements?.rootDiv!),

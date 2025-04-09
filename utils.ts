@@ -1,4 +1,4 @@
-import { CartesianSeries, ConfigEntity, Entity, Hass, HassEntity } from "./types";
+import { ConfigEntity, Entity, Hass, HassEntity } from "./types";
 
 export function appendUnknownValue(
   totalValue: number,
@@ -20,8 +20,12 @@ export function appendUnknownValue(
   }
 }
 
-export function formatValue(value: number, entity: HassEntity, config?: Entity) {
-  if (typeof config === 'object' && config?.yUnits) {
+export function formatValue(
+  value: number,
+  entity: HassEntity,
+  config?: Entity
+) {
+  if (typeof config === "object" && config?.yUnits) {
     return `${value}${config?.yUnits}`;
   }
   const { unit_of_measurement: unit = "" } = entity?.attributes ?? {};
@@ -37,24 +41,6 @@ export function formatPieTooltip(
   entity: HassEntity
 ) {
   return { title: name, content: formatValue(value, entity) };
-}
-
-const TIME_FORMAT = Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-export function formatCartesianTooltip(
-  name: string,
-  key: Date,
-  value: number,
-  entity: HassEntity,
-  config: ConfigEntity,
-) {
-  return {
-    title: `${name}: ${TIME_FORMAT.format(key)}`,
-    content: formatValue(value, entity, config),
-  };
 }
 
 export function syntheticDatum(name: string, value: number, uom?: string) {
@@ -84,7 +70,14 @@ export function readEntityConfig(
     };
   }
 
-  const { entity, name, action, offsetXs = 0, yMultiplier = 1, ...config } = configEntity;
+  const {
+    entity,
+    name,
+    action,
+    offsetXs = 0,
+    yMultiplier = 1,
+    ...config
+  } = configEntity;
   return {
     name: name ?? hass?.states[entity]?.attributes?.friendly_name ?? entity,
     action: action ?? "more-info",
