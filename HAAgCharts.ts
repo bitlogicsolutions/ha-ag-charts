@@ -10,7 +10,6 @@ import {
   AgChartThemeName,
 } from "ag-charts-enterprise";
 import { performAction } from "./actions";
-import { undefined } from "./ag-charts";
 import { setupDOM } from "./dom";
 import { fetchStatistics } from "./stats";
 import { Config, HassEntity, Hass, CartesianSeries, PieSeries } from "./types";
@@ -18,7 +17,6 @@ import {
   readEntityConfig,
   unitOfMeasurement,
   key,
-  formatCartesianTooltip,
   formatValue,
   formatPieTooltip,
   appendUnknownValue,
@@ -148,16 +146,6 @@ export class HAAgCharts extends HTMLElement {
               yKey: key(entity),
               yName: entity.name,
               stacked,
-              tooltip: {
-                renderer: ({ datum, xKey, yKey }) =>
-                  formatCartesianTooltip(
-                    entity.name!,
-                    datum[xKey],
-                    datum[yKey],
-                    this.entities[yKey],
-                    entity
-                  ),
-              },
               listeners: {
                 nodeClick: () => performAction(entity, this.elements?.rootDiv!),
               },
