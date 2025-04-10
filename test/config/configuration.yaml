@@ -10,9 +10,8 @@ homeassistant:
 # Enable all default components
 default_config:
 
-# Enable statistics
+# Enable recorder
 recorder:
-statistics:
 
 # Test sensors
 sensor:
