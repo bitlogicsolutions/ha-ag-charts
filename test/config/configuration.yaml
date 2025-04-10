@@ -1,0 +1,101 @@
+# Basic configuration
+homeassistant:
+  name: AG Charts Dev
+  latitude: 51.5074
+  longitude: -0.1278
+  elevation: 0
+  unit_system: metric
+  time_zone: UTC
+
+# Enable all default components
+default_config:
+
+# Enable statistics
+recorder:
+statistics:
+
+# Test sensors
+sensor:
+  - platform: template
+    sensors:
+      temperature:
+        friendly_name: Temperature
+        unit_of_measurement: '°C'
+        value_template: "{{ (states('input_number.temperature') | float) }}"
+      humidity:
+        friendly_name: Humidity
+        unit_of_measurement: '%'
+        value_template: "{{ (states('input_number.humidity') | float) }}"
+      pressure:
+        friendly_name: Pressure
+        unit_of_measurement: 'hPa'
+        value_template: "{{ (states('input_number.pressure') | float) }}"
+      power:
+        friendly_name: Power
+        unit_of_measurement: 'W'
+        value_template: "{{ (states('input_number.power') | float) }}"
+      energy:
+        friendly_name: Energy
+        unit_of_measurement: 'kWh'
+        value_template: "{{ (states('input_number.energy') | float) }}"
+
+# Input numbers for test data
+input_number:
+  temperature:
+    name: Temperature Input
+    min: 15
+    max: 30
+    step: 0.1
+    mode: box
+  humidity:
+    name: Humidity Input
+    min: 30
+    max: 70
+    step: 1
+    mode: box
+  pressure:
+    name: Pressure Input
+    min: 980
+    max: 1030
+    step: 0.1
+    mode: box
+  power:
+    name: Power Input
+    min: 0
+    max: 2000
+    step: 10
+    mode: box
+  energy:
+    name: Energy Input
+    min: 0
+    max: 10
+    step: 0.1
+    mode: box
+
+# Automation to update test data
+automation:
+  - alias: 'Update Test Sensors'
+    trigger:
+      - platform: time_pattern
+        minutes: /5
+    action:
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.temperature
+          value: '{{ (20 + random(-5, 5)) | round(1) }}'
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.humidity
+          value: '{{ (50 + random(-20, 20)) | round(0) }}'
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.pressure
+          value: '{{ (1013 + random(-15, 15)) | round(1) }}'
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.power
+          value: '{{ (1000 + random(-500, 500)) | round(0) }}'
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.energy
+          value: '{{ (2.5 + random(-1, 1)) | round(1) }}'

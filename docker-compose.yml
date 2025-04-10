@@ -1,0 +1,19 @@
+version: '3'
+services:
+  homeassistant:
+    container_name: ha-ag-charts-dev
+    image: ghcr.io/home-assistant/home-assistant:dev
+    volumes:
+      - ./test/config:/config
+      - ./test/custom_components:/config/custom_components
+      - ./src:/config/custom_components/ag_charts/src
+      - ./dist:/config/custom_components/ag_charts/dist
+    environment:
+      - TZ=UTC
+      - HA_CONFIG=/config
+      - HA_DEV_MODE=true
+    ports:
+      - '8123:8123'
+    restart: unless-stopped
+    privileged: true
+    network_mode: host

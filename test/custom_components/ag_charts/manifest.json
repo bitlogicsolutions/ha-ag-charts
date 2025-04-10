@@ -1,0 +1,10 @@
+{
+  "domain": "ag_charts",
+  "name": "AG Charts",
+  "documentation": "https://github.com/bitlogicsolutions/ha-ag-charts",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": [],
+  "version": "0.0.1",
+  "iot_class": "calculated"
+} 
