@@ -7,15 +7,15 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js",
-    "watch": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js --watch",
+    "build": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json",
+    "watch": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json --watch",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {
-    "ag-charts-community": "^10.0.0",
-    "ag-charts-enterprise": "^10.0.0",
+    "ag-charts-community": "^11.2.2",
+    "ag-charts-enterprise": "^11.2.2",
     "lit": "^3.1.0"
   },
   "devDependencies": {
