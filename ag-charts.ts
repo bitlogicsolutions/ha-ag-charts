@@ -3,7 +3,7 @@ import { Config, Hass, HassEntity } from './types';
 import { setupDOM } from './dom';
 import { buildSeriesConfig } from './series';
 import { updateData } from './data';
-import { CONFIG_SCHEMA } from './config-schema';
+import './ha-ag-charts-editor';
 
 console.info(
   `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.0.1`,
@@ -21,8 +21,13 @@ class HAAgCharts extends HTMLElement {
 
   private phase: 'init' | 'ready' = 'init';
 
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
   static getConfigElement() {
-    return document.createElement('ha-form');
+    return document.createElement('ha-ag-charts-editor');
   }
 
   static getStubConfig(hass: Hass) {
@@ -82,5 +87,4 @@ customElements.define('ha-ag-charts', HAAgCharts);
   description: 'Display data using AG Charts',
   preview: true,
   documentationURL: 'https://github.com/bitlogicsolutions/ha-ag-charts',
-  configSchema: CONFIG_SCHEMA,
 });

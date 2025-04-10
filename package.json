@@ -1,21 +1,26 @@
 {
   "name": "ha-ag-charts",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "description": "AG Charts integration for Home Assistant",
   "main": "dist/ag-charts.js",
   "author": "Alan Treadway",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "tsc --noEmit && npx esbuild --bundle ./ag-charts.ts --minify --outfile=dist/ag-charts.js",
+    "build": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js",
+    "watch": "esbuild ag-charts.ts --bundle --outfile=dist/ag-charts.js --watch",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {
-    "ag-charts-enterprise": "^11.2.1"
+    "ag-charts-community": "^10.0.0",
+    "ag-charts-enterprise": "^10.0.0",
+    "lit": "^3.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.0.0",
     "@types/node": "^20.11.24",
     "prettier": "^3.2.5"
   }
