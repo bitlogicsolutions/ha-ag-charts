@@ -1,5 +1,5 @@
 import { fetchStatistics } from './stats';
-import { CartesianSeries, Context, Hass } from './types';
+import { CartesianSeries, Context, Hass } from '../types';
 import { appendUnknownValue, key, readEntityConfig } from './utils';
 
 export async function updateData(context: Context, hass: Hass) {

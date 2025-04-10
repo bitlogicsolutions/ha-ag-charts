@@ -1,4 +1,4 @@
-import { Hass } from './types';
+import { Hass } from '../types';
 
 export type Statistics = {
   start: string;
