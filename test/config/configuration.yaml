@@ -13,6 +13,13 @@ default_config:
 # Enable recorder
 recorder:
 
+# Enable AG Charts integration
+ag_charts:
+
+# Load custom JavaScript
+extra_module_url:
+  - /www/custom_components/ag_charts/dist/ag-charts.js
+
 # Test sensors
 sensor:
   - platform: template
@@ -81,20 +88,20 @@ automation:
       - service: input_number.set_value
         data:
           entity_id: input_number.temperature
-          value: '{{ (20 + random(-5, 5)) | round(1) }}'
+          value: '{{ (20 + (range(-50, 51) | random) / 10.0) | round(1) }}'
       - service: input_number.set_value
         data:
           entity_id: input_number.humidity
-          value: '{{ (50 + random(-20, 20)) | round(0) }}'
+          value: '{{ (50 + (range(-20, 21) | random)) | int }}'
       - service: input_number.set_value
         data:
           entity_id: input_number.pressure
-          value: '{{ (1013 + random(-15, 15)) | round(1) }}'
+          value: '{{ (1013 + (range(-150, 151) | random) / 10.0) | round(1) }}'
       - service: input_number.set_value
         data:
           entity_id: input_number.power
-          value: '{{ (1000 + random(-500, 500)) | round(0) }}'
+          value: '{{ (1000 + (range(-500, 501) | random)) | int }}'
       - service: input_number.set_value
         data:
           entity_id: input_number.energy
-          value: '{{ (2.5 + random(-1, 1)) | round(1) }}'
+          value: '{{ (2.5 + (range(-10, 11) | random) / 10.0) | round(1) }}'

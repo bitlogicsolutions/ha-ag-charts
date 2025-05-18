@@ -17,7 +17,6 @@ services:
       - '8123:8123'
     restart: unless-stopped
     privileged: true
-    network_mode: host
 
 volumes:
   config: {}
