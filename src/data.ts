@@ -1,5 +1,5 @@
 import { fetchStatistics } from './stats';
-import { CartesianSeries, Context, Hass } from '../types';
+import { CartesianSeries, Context, Hass } from './types';
 import { appendUnknownValue, key, readEntityConfig } from './utils';
 
 export async function updateData(context: Context, hass: Hass) {
@@ -55,7 +55,7 @@ export async function updateData(context: Context, hass: Hass) {
         interval
       );
 
-      for (const { start, end, min, mean, max, state } of stats ?? []) {
+      for (const { start, mean, state } of stats ?? []) {
         let x = start + (entity.offsetXs ?? 0) * 1_000;
         let dataEntry = dataMap.get(x);
         if (dataEntry == null) {

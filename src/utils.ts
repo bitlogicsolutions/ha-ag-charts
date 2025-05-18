@@ -1,4 +1,4 @@
-import { ConfigEntity, Entity, Hass, HassEntity } from '../types';
+import { ConfigEntity, Entity, Hass, HassEntity } from './types';
 
 export function appendUnknownValue(
   totalValue: number,

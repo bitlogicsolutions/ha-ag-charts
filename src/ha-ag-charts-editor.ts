@@ -1,6 +1,6 @@
 import { LitElement, html, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { Config, CartesianSeries, PieSeries } from '../types';
+import { Config, CartesianSeries, PieSeries } from './types';
 import { AgChartThemeName } from 'ag-charts-enterprise';
 
 declare global {

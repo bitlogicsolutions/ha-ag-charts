@@ -15,8 +15,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {
-    "ag-charts-community": "^11.2.2",
-    "ag-charts-enterprise": "^11.2.2",
+    "ag-charts-community": "^11.3.0",
+    "ag-charts-enterprise": "^11.3.0",
     "lit": "^3.1.0"
   },
   "devDependencies": {
