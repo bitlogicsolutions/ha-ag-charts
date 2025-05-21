@@ -32,21 +32,21 @@ This project uses Docker to run Home Assistant in development mode with the AG C
 
 1. Install dependencies:
 
-   ```bash
-   yarn install
-   ```
+    ```bash
+    yarn install
+    ```
 
 2. Build the component:
 
-   ```bash
-   yarn build
-   ```
+    ```bash
+    yarn build
+    ```
 
 3. Start Home Assistant:
 
-   ```bash
-   docker-compose up
-   ```
+    ```bash
+    docker-compose up
+    ```
 
 4. Access Home Assistant at http://localhost:8123
 
@@ -54,9 +54,9 @@ This project uses Docker to run Home Assistant in development mode with the AG C
 
 1. Make changes to the TypeScript files in the `src/` directory
 2. Rebuild the component:
-   ```bash
-   yarn build
-   ```
+    ```bash
+    yarn build
+    ```
 3. The changes will be automatically available to Home Assistant
 
 ### Test Sensors

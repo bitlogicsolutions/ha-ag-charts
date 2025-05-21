@@ -1,28 +1,28 @@
 {
-  "name": "ha-ag-charts",
-  "version": "0.0.1",
-  "description": "AG Charts integration for Home Assistant",
-  "main": "dist/ag-charts.js",
-  "author": "Alan Treadway",
-  "license": "MIT",
-  "private": true,
-  "scripts": {
-    "build": "esbuild src/ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json",
-    "watch": "esbuild src/ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json --watch",
-    "dev": "node dev-server.js",
-    "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
-  },
-  "dependencies": {
-    "ag-charts-community": "^11.3.0",
-    "ag-charts-enterprise": "^11.3.0",
-    "lit": "^3.1.0"
-  },
-  "devDependencies": {
-    "esbuild": "^0.20.0",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.11.24",
-    "prettier": "^3.2.5"
-  }
+    "name": "ha-ag-charts",
+    "version": "0.0.1",
+    "description": "AG Charts integration for Home Assistant",
+    "main": "dist/ag-charts.js",
+    "author": "Alan Treadway",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "build": "esbuild src/ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json",
+        "watch": "esbuild src/ag-charts.ts --bundle --outfile=dist/ag-charts.js --target=es2020 --format=esm --loader:.ts=ts --tsconfig=tsconfig.json --watch",
+        "dev": "node dev-server.js",
+        "type-check": "tsc --noEmit",
+        "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+        "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    },
+    "dependencies": {
+        "ag-charts-community": "^11.3.0",
+        "ag-charts-enterprise": "^11.3.0",
+        "lit": "^3.1.0"
+    },
+    "devDependencies": {
+        "esbuild": "^0.20.0",
+        "typescript": "^5.0.0",
+        "@types/node": "^20.11.24",
+        "prettier": "^3.2.5"
+    }
 }

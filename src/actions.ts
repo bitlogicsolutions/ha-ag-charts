@@ -1,39 +1,39 @@
 import { ConfigEntity } from './types';
 
 export function performAction(entity: ConfigEntity, element: HTMLElement) {
-  switch (entity.action ?? 'more-info') {
-    case 'more-info':
-      actionInfo(entity, element);
-      break;
-    case 'navigate':
-      actionNavigate(entity);
-      break;
-    default:
-      throw new Error(`Unknown action '${entity.action}'`);
-  }
+    switch (entity.action ?? 'more-info') {
+        case 'more-info':
+            actionInfo(entity, element);
+            break;
+        case 'navigate':
+            actionNavigate(entity);
+            break;
+        default:
+            throw new Error(`Unknown action '${entity.action}'`);
+    }
 }
 
 export function actionNavigate(entity: ConfigEntity) {
-  history.pushState(null, '', entity.path);
+    history.pushState(null, '', entity.path);
 
-  window.dispatchEvent(
-    new Event('location-changed', {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-    })
-  );
+    window.dispatchEvent(
+        new Event('location-changed', {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+        })
+    );
 }
 
 export function actionInfo(entity: ConfigEntity, element: HTMLElement) {
-  const event = new Event('hass-more-info', {
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-  });
-  (event as any).detail = { entityId: entity.entity };
+    const event = new Event('hass-more-info', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+    });
+    (event as any).detail = { entityId: entity.entity };
 
-  element.dispatchEvent(event);
+    element.dispatchEvent(event);
 }
 
 // case "url":

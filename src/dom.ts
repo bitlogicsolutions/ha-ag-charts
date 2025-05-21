@@ -29,22 +29,22 @@ const DOM = `
 `;
 
 export function setupDOM(parent: HTMLElement) {
-  const { shadowRoot } = parent;
+    const { shadowRoot } = parent;
 
-  const rootDiv = document.createElement('div');
-  rootDiv.innerHTML = DOM;
-  shadowRoot?.append(rootDiv);
+    const rootDiv = document.createElement('div');
+    rootDiv.innerHTML = DOM;
+    shadowRoot?.append(rootDiv);
 
-  const contentDiv = rootDiv.querySelector('#content')!;
-  const fsDiv = rootDiv.querySelector('#fs')!;
-  fsDiv.addEventListener('click', () => {
-    contentDiv.classList.toggle('full-screen', true);
-    contentDiv.requestFullscreen({ navigationUI: 'auto' });
-  });
-  rootDiv.addEventListener('fullscreenchange', () => {
-    contentDiv.classList.toggle('full-screen', document.fullscreenElement != null);
-  });
+    const contentDiv = rootDiv.querySelector('#content')!;
+    const fsDiv = rootDiv.querySelector('#fs')!;
+    fsDiv.addEventListener('click', () => {
+        contentDiv.classList.toggle('full-screen', true);
+        contentDiv.requestFullscreen({ navigationUI: 'auto' });
+    });
+    rootDiv.addEventListener('fullscreenchange', () => {
+        contentDiv.classList.toggle('full-screen', document.fullscreenElement != null);
+    });
 
-  const containerDiv = rootDiv.querySelector('#container')! as HTMLElement;
-  return { rootDiv, containerDiv };
+    const containerDiv = rootDiv.querySelector('#container')! as HTMLElement;
+    return { rootDiv, containerDiv };
 }
