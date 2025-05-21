@@ -15,20 +15,20 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     const { config: { series = [], legend, theme = 'ag-default-dark', title } = {} } = context;
     let optionalConfig: Pick<AgCartesianChartOptions, 'axes' | 'zoom' | 'legend'> = {};
     const cartesianSeries = series.filter((s): s is CartesianSeries => s.type != 'pie');
-    const uom = new Map();
+    const units = new Map();
     for (const { entities = [], minY, maxY } of cartesianSeries) {
         for (const config of entities) {
             const entity = readEntityConfig(hass, config);
             const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
-            if (uom.has(unit)) {
-                uom.get(unit).push(key(entity));
+            if (units.has(unit)) {
+                units.get(unit).push(key(entity));
             } else {
-                uom.set(unit, [key(entity)]);
+                units.set(unit, [key(entity)]);
             }
         }
 
         optionalConfig.axes = [{ type: 'ordinal-time', position: 'bottom' }];
-        for (const [unit, keys] of uom.entries()) {
+        for (const [unit, keys] of units.entries()) {
             optionalConfig.axes.push({
                 type: 'number',
                 position: 'left',
@@ -54,13 +54,9 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     const options: AgChartOptions = {
         container: context.elements?.containerDiv,
         theme: generateTheme(theme),
-        background: { visible: false },
         title: { text: title },
         series: generateSeriesOpts(context, hass) as any[],
         minWidth: 0,
-        tooltip: {
-            mode: 'shared',
-        },
         ...optionalConfig,
     };
     return options;
@@ -140,6 +136,8 @@ function generateTheme(baseTheme: AgChartThemeName) {
         overrides: {
             common: {
                 animation: { enabled: false },
+                background: { visible: false },
+                tooltip: { mode: 'shared' as const },
             },
             line: { series: { marker: { enabled: false } } },
         },
