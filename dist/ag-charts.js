@@ -92904,7 +92904,11 @@ function appendUnknownValue(totalValue, data, unknownName) {
   );
   if (unknownValue > 0) {
     data.push(
-      syntheticDatum(unknownName, unknownValue, data[0].entity?.attributes?.unit_of_measurement)
+      syntheticDatum(
+        unknownName,
+        unknownValue,
+        data[0].entity?.attributes?.unit_of_measurement
+      )
     );
   }
 }
@@ -92995,19 +92999,19 @@ function buildSeriesConfig(context, hass) {
   const { config: { series = [], legend, theme = "ag-default-dark", title } = {} } = context;
   let optionalConfig = {};
   const cartesianSeries = series.filter((s3) => s3.type != "pie");
-  const uom = /* @__PURE__ */ new Map();
+  const units = /* @__PURE__ */ new Map();
   for (const { entities = [], minY, maxY } of cartesianSeries) {
     for (const config of entities) {
       const entity = readEntityConfig(hass, config);
       const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
-      if (uom.has(unit)) {
-        uom.get(unit).push(key(entity));
+      if (units.has(unit)) {
+        units.get(unit).push(key(entity));
       } else {
-        uom.set(unit, [key(entity)]);
+        units.set(unit, [key(entity)]);
       }
     }
     optionalConfig.axes = [{ type: "ordinal-time", position: "bottom" }];
-    for (const [unit, keys] of uom.entries()) {
+    for (const [unit, keys] of units.entries()) {
       optionalConfig.axes.push({
         type: "number",
         position: "left",
@@ -93030,13 +93034,9 @@ function buildSeriesConfig(context, hass) {
   const options = {
     container: context.elements?.containerDiv,
     theme: generateTheme(theme),
-    background: { visible: false },
     title: { text: title },
     series: generateSeriesOpts(context, hass),
     minWidth: 0,
-    tooltip: {
-      mode: "shared"
-    },
     ...optionalConfig
   };
   return options;
@@ -93104,7 +93104,10 @@ function generateTheme(baseTheme) {
     baseTheme,
     overrides: {
       common: {
-        animation: { enabled: false }
+        animation: { enabled: false },
+        background: { visible: false },
+        tooltip: { mode: "shared" },
+        zoom: { buttons: { visible: "zoomed" } }
       },
       line: { series: { marker: { enabled: false } } }
     }
@@ -93175,7 +93178,7 @@ async function updateData(context, hass) {
         /* @__PURE__ */ new Date(),
         interval
       );
-      for (const { start: start2, end: end2, min, mean, max, state } of stats ?? []) {
+      for (const { start: start2, mean, state } of stats ?? []) {
         let x2 = start2 + (entity.offsetXs ?? 0) * 1e3;
         let dataEntry = dataMap.get(x2);
         if (dataEntry == null) {
@@ -93910,188 +93913,202 @@ var HAAgChartsEditor = class extends r4 {
   }
   render() {
     return x`
-      <div class="card-config">
-        <ha-textfield
-          label="Title"
-          name="title"
-          .value=${this._title}
-          @change=${this._valueChanged}
-        ></ha-textfield>
+            <div class="card-config">
+                <ha-textfield
+                    label="Title"
+                    name="title"
+                    .value=${this._title}
+                    @change=${this._valueChanged}
+                ></ha-textfield>
 
-        <ha-select label="Theme" name="theme" .value=${this._theme} @change=${this._valueChanged}>
-          ${this._themes.map(
+                <ha-select
+                    label="Theme"
+                    name="theme"
+                    .value=${this._theme}
+                    @change=${this._valueChanged}
+                >
+                    ${this._themes.map(
       (theme) => x`<mwc-list-item .value=${theme}>${theme}</mwc-list-item>`
     )}
-        </ha-select>
-
-        <ha-textfield
-          label="Refresh Interval (seconds)"
-          name="refresh"
-          type="number"
-          .value=${this._refresh}
-          @change=${this._valueChanged}
-        ></ha-textfield>
-
-        <ha-select
-          label="Interval"
-          name="interval"
-          .value=${this._interval}
-          @change=${this._valueChanged}
-        >
-          <mwc-list-item value="5minutes">5 minutes</mwc-list-item>
-        </ha-select>
-
-        <ha-textfield
-          label="Period (days)"
-          name="period"
-          type="number"
-          .value=${this._period}
-          @change=${this._valueChanged}
-        ></ha-textfield>
-
-        <ha-select
-          label="Legend Position"
-          name="legend"
-          .value=${this._legend}
-          @change=${this._valueChanged}
-        >
-          <mwc-list-item value="left">Left</mwc-list-item>
-          <mwc-list-item value="right">Right</mwc-list-item>
-          <mwc-list-item value="top">Top</mwc-list-item>
-          <mwc-list-item value="bottom">Bottom</mwc-list-item>
-          <mwc-list-item value="none">None</mwc-list-item>
-        </ha-select>
-
-        <ha-entity-picker
-          label="Total Entity"
-          name="total"
-          .value=${this._total}
-          @change=${this._valueChanged}
-        ></ha-entity-picker>
-
-        <ha-textfield
-          label="Total Multiplier"
-          name="totalMultiplier"
-          type="number"
-          .value=${this._totalMultiplier}
-          @change=${this._valueChanged}
-        ></ha-textfield>
-
-        <ha-textfield
-          label="Unknown Value Name"
-          name="unknownName"
-          .value=${this._unknownName}
-          @change=${this._valueChanged}
-        ></ha-textfield>
-
-        <div class="series-section">
-          <h3>Series</h3>
-          ${this._series.map(
-      (series, seriesIndex) => x`
-              <div class="series-item">
-                <ha-select
-                  label="Type"
-                  name="series.${seriesIndex}.type"
-                  .value=${series.type}
-                  @change=${this._valueChanged}
-                >
-                  <mwc-list-item value="area">Area</mwc-list-item>
-                  <mwc-list-item value="bar">Bar</mwc-list-item>
-                  <mwc-list-item value="line">Line</mwc-list-item>
-                  <mwc-list-item value="pie">Pie</mwc-list-item>
                 </ha-select>
 
-                ${series.type !== "pie" ? x`
-                      <div class="entities-section">
-                        <h4>Entities</h4>
-                        ${series.entities?.map(
-        (entity, entityIndex) => x`
-                            <div class="entity-item">
-                              <ha-entity-picker
-                                label="Entity"
-                                name="series.${seriesIndex}.entities.${entityIndex}.entity"
-                                .value=${typeof entity === "string" ? entity : entity.entity}
-                                @change=${this._valueChanged}
-                              ></ha-entity-picker>
-                              <ha-textfield
-                                label="Name"
-                                name="series.${seriesIndex}.entities.${entityIndex}.name"
-                                .value=${typeof entity === "string" ? "" : entity.name}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-select
-                                label="Action"
-                                name="series.${seriesIndex}.entities.${entityIndex}.action"
-                                .value=${typeof entity === "string" ? "" : entity.action}
-                                @change=${this._valueChanged}
-                              >
-                                <mwc-list-item value="more-info">More Info</mwc-list-item>
-                                <mwc-list-item value="navigate">Navigate</mwc-list-item>
-                              </ha-select>
-                              ${typeof entity !== "string" && entity.action === "navigate" ? x`
-                                    <ha-textfield
-                                      label="Path"
-                                      name="series.${seriesIndex}.entities.${entityIndex}.path"
-                                      .value=${entity.path}
-                                      @change=${this._valueChanged}
-                                    ></ha-textfield>
-                                  ` : ""}
-                              <ha-textfield
-                                label="X Offset (seconds)"
-                                name="series.${seriesIndex}.entities.${entityIndex}.offsetXs"
-                                type="number"
-                                .value=${typeof entity === "string" ? "" : entity.offsetXs}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-textfield
-                                label="Y Multiplier"
-                                name="series.${seriesIndex}.entities.${entityIndex}.yMultiplier"
-                                type="number"
-                                .value=${typeof entity === "string" ? "" : entity.yMultiplier}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-textfield
-                                label="Y Units"
-                                name="series.${seriesIndex}.entities.${entityIndex}.yUnits"
-                                .value=${typeof entity === "string" ? "" : entity.yUnits}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-textfield
-                                label="Fill Color"
-                                name="series.${seriesIndex}.entities.${entityIndex}.fill"
-                                .value=${typeof entity === "string" ? "" : entity.fill}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-textfield
-                                label="Stroke Color"
-                                name="series.${seriesIndex}.entities.${entityIndex}.stroke"
-                                .value=${typeof entity === "string" ? "" : entity.stroke}
-                                @change=${this._valueChanged}
-                              ></ha-textfield>
-                              <ha-icon-button
-                                icon="hass:delete"
-                                @click=${() => this._removeEntity(seriesIndex, entityIndex)}
-                              ></ha-icon-button>
-                            </div>
-                          `
-      )}
-                        <ha-button @click=${() => this._addEntity(seriesIndex)}>
-                          Add Entity
-                        </ha-button>
-                      </div>
-                    ` : ""}
+                <ha-textfield
+                    label="Refresh Interval (seconds)"
+                    name="refresh"
+                    type="number"
+                    .value=${this._refresh}
+                    @change=${this._valueChanged}
+                ></ha-textfield>
 
-                <ha-icon-button
-                  icon="hass:delete"
-                  @click=${() => this._removeSeries(seriesIndex)}
-                ></ha-icon-button>
-              </div>
-            `
+                <ha-select
+                    label="Interval"
+                    name="interval"
+                    .value=${this._interval}
+                    @change=${this._valueChanged}
+                >
+                    <mwc-list-item value="5minutes">5 minutes</mwc-list-item>
+                </ha-select>
+
+                <ha-textfield
+                    label="Period (days)"
+                    name="period"
+                    type="number"
+                    .value=${this._period}
+                    @change=${this._valueChanged}
+                ></ha-textfield>
+
+                <ha-select
+                    label="Legend Position"
+                    name="legend"
+                    .value=${this._legend}
+                    @change=${this._valueChanged}
+                >
+                    <mwc-list-item value="left">Left</mwc-list-item>
+                    <mwc-list-item value="right">Right</mwc-list-item>
+                    <mwc-list-item value="top">Top</mwc-list-item>
+                    <mwc-list-item value="bottom">Bottom</mwc-list-item>
+                    <mwc-list-item value="none">None</mwc-list-item>
+                </ha-select>
+
+                <ha-entity-picker
+                    label="Total Entity"
+                    name="total"
+                    .value=${this._total}
+                    @change=${this._valueChanged}
+                ></ha-entity-picker>
+
+                <ha-textfield
+                    label="Total Multiplier"
+                    name="totalMultiplier"
+                    type="number"
+                    .value=${this._totalMultiplier}
+                    @change=${this._valueChanged}
+                ></ha-textfield>
+
+                <ha-textfield
+                    label="Unknown Value Name"
+                    name="unknownName"
+                    .value=${this._unknownName}
+                    @change=${this._valueChanged}
+                ></ha-textfield>
+
+                <div class="series-section">
+                    <h3>Series</h3>
+                    ${this._series.map(
+      (series, seriesIndex) => x`
+                            <div class="series-item">
+                                <ha-select
+                                    label="Type"
+                                    name="series.${seriesIndex}.type"
+                                    .value=${series.type}
+                                    @change=${this._valueChanged}
+                                >
+                                    <mwc-list-item value="area">Area</mwc-list-item>
+                                    <mwc-list-item value="bar">Bar</mwc-list-item>
+                                    <mwc-list-item value="line">Line</mwc-list-item>
+                                    <mwc-list-item value="pie">Pie</mwc-list-item>
+                                </ha-select>
+
+                                ${series.type !== "pie" ? x`
+                                          <div class="entities-section">
+                                              <h4>Entities</h4>
+                                              ${series.entities?.map(
+        (entity, entityIndex) => x`
+                                                      <div class="entity-item">
+                                                          <ha-entity-picker
+                                                              label="Entity"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.entity"
+                                                              .value=${typeof entity === "string" ? entity : entity.entity}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-entity-picker>
+                                                          <ha-textfield
+                                                              label="Name"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.name"
+                                                              .value=${typeof entity === "string" ? "" : entity.name}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-select
+                                                              label="Action"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.action"
+                                                              .value=${typeof entity === "string" ? "" : entity.action}
+                                                              @change=${this._valueChanged}
+                                                          >
+                                                              <mwc-list-item value="more-info"
+                                                                  >More Info</mwc-list-item
+                                                              >
+                                                              <mwc-list-item value="navigate"
+                                                                  >Navigate</mwc-list-item
+                                                              >
+                                                          </ha-select>
+                                                          ${typeof entity !== "string" && entity.action === "navigate" ? x`
+                                                                    <ha-textfield
+                                                                        label="Path"
+                                                                        name="series.${seriesIndex}.entities.${entityIndex}.path"
+                                                                        .value=${entity.path}
+                                                                        @change=${this._valueChanged}
+                                                                    ></ha-textfield>
+                                                                ` : ""}
+                                                          <ha-textfield
+                                                              label="X Offset (seconds)"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.offsetXs"
+                                                              type="number"
+                                                              .value=${typeof entity === "string" ? "" : entity.offsetXs}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-textfield
+                                                              label="Y Multiplier"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.yMultiplier"
+                                                              type="number"
+                                                              .value=${typeof entity === "string" ? "" : entity.yMultiplier}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-textfield
+                                                              label="Y Units"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.yUnits"
+                                                              .value=${typeof entity === "string" ? "" : entity.yUnits}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-textfield
+                                                              label="Fill Color"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.fill"
+                                                              .value=${typeof entity === "string" ? "" : entity.fill}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-textfield
+                                                              label="Stroke Color"
+                                                              name="series.${seriesIndex}.entities.${entityIndex}.stroke"
+                                                              .value=${typeof entity === "string" ? "" : entity.stroke}
+                                                              @change=${this._valueChanged}
+                                                          ></ha-textfield>
+                                                          <ha-icon-button
+                                                              icon="hass:delete"
+                                                              @click=${() => this._removeEntity(
+          seriesIndex,
+          entityIndex
+        )}
+                                                          ></ha-icon-button>
+                                                      </div>
+                                                  `
+      )}
+                                              <ha-button
+                                                  @click=${() => this._addEntity(seriesIndex)}
+                                              >
+                                                  Add Entity
+                                              </ha-button>
+                                          </div>
+                                      ` : ""}
+
+                                <ha-icon-button
+                                    icon="hass:delete"
+                                    @click=${() => this._removeSeries(seriesIndex)}
+                                ></ha-icon-button>
+                            </div>
+                        `
     )}
-          <ha-button @click=${this._addSeries}>Add Series</ha-button>
-        </div>
-      </div>
-    `;
+                    <ha-button @click=${this._addSeries}>Add Series</ha-button>
+                </div>
+            </div>
+        `;
   }
 };
 HAAgChartsEditor.styles = `
@@ -94166,7 +94183,7 @@ HAAgChartsEditor = __decorateClass([
 // src/ag-charts.ts
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.0.1`,
+%cVersion: 0.1.1-alpha-2`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

@@ -6,7 +6,7 @@ import { updateData } from './data';
 import './ha-ag-charts-editor';
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.0.1`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.1.1-alpha-2`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
