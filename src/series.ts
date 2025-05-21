@@ -138,6 +138,7 @@ function generateTheme(baseTheme: AgChartThemeName) {
                 animation: { enabled: false },
                 background: { visible: false },
                 tooltip: { mode: 'shared' as const },
+                zoom: { buttons: { visible: 'zoomed' as const } },
             },
             line: { series: { marker: { enabled: false } } },
         },
