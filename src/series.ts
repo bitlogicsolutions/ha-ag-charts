@@ -8,7 +8,7 @@ import {
     AgPieSeriesOptions,
     time,
 } from 'ag-charts-enterprise';
-import { CartesianSeries, Context, Hass, PieSeries, Series } from './types';
+import { CartesianSeries, Context, Hass, PieSeries } from './types';
 import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue } from './utils';
 import { performAction } from './actions';
 
