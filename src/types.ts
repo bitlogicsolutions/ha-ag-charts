@@ -3,6 +3,7 @@ import { AgChartThemeName } from 'ag-charts-enterprise';
 export interface Config {
     title: string;
     theme: AgChartThemeName;
+    minHeight?: number;
     series: Series[];
     entities: Entity[];
     refresh?: number;

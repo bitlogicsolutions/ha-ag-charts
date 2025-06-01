@@ -13,8 +13,12 @@ import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue
 import { performAction } from './actions';
 
 export function buildSeriesConfig(context: Context, hass: Hass) {
-    const { config: { series = [], legend, theme = 'ag-default-dark', title } = {} } = context;
-    let optionalConfig: Pick<AgCartesianChartOptions, 'axes' | 'zoom' | 'legend'> = {};
+    const { config: { series = [], legend, theme = 'ag-default-dark', title, minHeight } = {} } =
+        context;
+    let optionalConfig: Pick<
+        AgCartesianChartOptions,
+        'axes' | 'zoom' | 'legend' | 'minHeight' | 'title'
+    > = {};
     const cartesianSeries = series.filter((s): s is CartesianSeries => s.type != 'pie');
     const units = new Map();
     const timeUnits = new Set<NonNullable<CartesianSeries['timeUnit']>>();
@@ -73,10 +77,17 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
         optionalConfig.legend = { position: legend };
     }
 
+    if (minHeight) {
+        optionalConfig.minHeight = minHeight;
+    }
+
+    if (title) {
+        optionalConfig.title = { text: title };
+    }
+
     const options: AgChartOptions = {
         container: context.elements?.containerDiv,
         theme: generateTheme(theme),
-        title: { text: title },
         series: generateSeriesOpts(context, hass) as any[],
         minWidth: 0,
         ...optionalConfig,
