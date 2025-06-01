@@ -92996,7 +92996,7 @@ function actionInfo(entity, element2) {
 
 // src/series.ts
 function buildSeriesConfig(context, hass) {
-  const { config: { series = [], legend, theme = "ag-default-dark", title } = {} } = context;
+  const { config: { series = [], legend, theme = "ag-default-dark", title, minHeight } = {} } = context;
   let optionalConfig = {};
   const cartesianSeries = series.filter((s3) => s3.type != "pie");
   const units = /* @__PURE__ */ new Map();
@@ -93051,10 +93051,15 @@ function buildSeriesConfig(context, hass) {
   } else if (legend != null) {
     optionalConfig.legend = { position: legend };
   }
+  if (minHeight) {
+    optionalConfig.minHeight = minHeight;
+  }
+  if (title) {
+    optionalConfig.title = { text: title };
+  }
   const options = {
     container: context.elements?.containerDiv,
     theme: generateTheme(theme),
-    title: { text: title },
     series: generateSeriesOpts(context, hass),
     minWidth: 0,
     ...optionalConfig
