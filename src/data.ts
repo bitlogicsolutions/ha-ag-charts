@@ -29,7 +29,7 @@ export async function updateData(context: Context, hass: Hass) {
                 const e = readEntityConfig(hass, c);
                 return {
                     name: e.name,
-                    value: Number(hass.states[e.entity]?.state ?? 0),
+                    value: Number(hass.states[e.entity]?.state ?? 0) * (e.yMultiplier ?? 1),
                     entity: hass.states[e.entity],
                     config: e,
                 };

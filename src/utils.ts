@@ -21,18 +21,17 @@ export function appendUnknownValue(
 }
 
 export function formatValue(value: number, entity: HassEntity, config?: Entity) {
+    let { unit_of_measurement: unit = '' } = entity?.attributes ?? {};
     if (typeof config === 'object' && config?.yUnits) {
-        return `${value}${config?.yUnits}`;
+        unit = config?.yUnits ?? unit;
     }
-    const { unit_of_measurement: unit = '' } = entity?.attributes ?? {};
 
     value = Math.round(value);
-
     return `${value}${unit}`;
 }
 
-export function formatPieTooltip(name: string, value: number, entity: HassEntity) {
-    return { title: name, content: formatValue(value, entity) };
+export function formatPieTooltip(name: string, value: number, entity: HassEntity, config?: Entity) {
+    return { title: name, content: formatValue(value, entity, config) };
 }
 
 export function syntheticDatum(name: string, value: number, uom?: string) {

@@ -36,6 +36,7 @@ export interface CartesianSeries {
     type: 'area' | 'bar' | 'line';
     entities: Entity[];
     stacked?: boolean;
+    timeUnit?: 'continuous' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'ordinal';
     minY?: number;
     maxY?: number;
 }
