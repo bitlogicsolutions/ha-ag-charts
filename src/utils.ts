@@ -27,7 +27,7 @@ export function formatValue(value: number, entity: HassEntity, config?: Entity) 
         unit = config?.yUnits ?? unit;
     }
 
-    value = Math.round(value);
+    value = Number(value.toPrecision(3));
     return `${value}${unit}`;
 }
 

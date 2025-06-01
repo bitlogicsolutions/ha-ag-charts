@@ -92917,7 +92917,7 @@ function formatValue3(value, entity, config) {
   if (typeof config === "object" && config?.yUnits) {
     unit = config?.yUnits ?? unit;
   }
-  value = Math.round(value);
+  value = Number(value.toPrecision(3));
   return `${value}${unit}`;
 }
 function formatPieTooltip(name, value, entity, config) {
