@@ -92913,15 +92913,15 @@ function appendUnknownValue(totalValue, data, unknownName) {
   }
 }
 function formatValue3(value, entity, config) {
+  let { unit_of_measurement: unit = "" } = entity?.attributes ?? {};
   if (typeof config === "object" && config?.yUnits) {
-    return `${value}${config?.yUnits}`;
+    unit = config?.yUnits ?? unit;
   }
-  const { unit_of_measurement: unit = "" } = entity?.attributes ?? {};
   value = Math.round(value);
   return `${value}${unit}`;
 }
-function formatPieTooltip(name, value, entity) {
-  return { title: name, content: formatValue3(value, entity) };
+function formatPieTooltip(name, value, entity, config) {
+  return { title: name, content: formatValue3(value, entity, config) };
 }
 function syntheticDatum(name, value, uom) {
   return {
@@ -93000,7 +93000,9 @@ function buildSeriesConfig(context, hass) {
   let optionalConfig = {};
   const cartesianSeries = series.filter((s3) => s3.type != "pie");
   const units = /* @__PURE__ */ new Map();
-  for (const { entities = [], minY, maxY } of cartesianSeries) {
+  const timeUnits = /* @__PURE__ */ new Set();
+  for (const { entities = [], minY, maxY, timeUnit } of cartesianSeries) {
+    timeUnits.add(timeUnit ?? "continuous");
     for (const config of entities) {
       const entity = readEntityConfig(hass, config);
       const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
@@ -93010,8 +93012,8 @@ function buildSeriesConfig(context, hass) {
         units.set(unit, [key(entity)]);
       }
     }
-    optionalConfig.axes = [{ type: "ordinal-time", position: "bottom" }];
     for (const [unit, keys] of units.entries()) {
+      optionalConfig.axes ?? (optionalConfig.axes = []);
       optionalConfig.axes.push({
         type: "number",
         position: "left",
@@ -93025,6 +93027,24 @@ function buildSeriesConfig(context, hass) {
   }
   if (cartesianSeries.length > 0) {
     optionalConfig.zoom = {};
+    optionalConfig.axes ?? (optionalConfig.axes = []);
+    const unit = timeUnits.values().next().value ?? "day";
+    if (timeUnits.size > 1) {
+      console.warn("AG Charts Card: Multiple time units not supported");
+    }
+    if (unit === "continuous") {
+      optionalConfig.axes.push({ type: "time", position: "bottom" });
+    } else if (unit === "ordinal") {
+      optionalConfig.axes.push({ type: "ordinal-time", position: "bottom" });
+    } else if (unit === "week") {
+      optionalConfig.axes.push({ type: "time", position: "bottom", unit: time_exports.monday });
+    } else {
+      optionalConfig.axes?.push({
+        type: "time",
+        position: "bottom",
+        unit
+      });
+    }
   }
   if (legend === "none") {
     optionalConfig.legend = { enabled: false };
@@ -93085,10 +93105,10 @@ function generateSeriesOpts(context, hass) {
           angleKey: "value",
           sectorLabelKey: "value",
           sectorLabel: {
-            formatter: ({ datum: { value, entity } }) => formatValue3(value, entity)
+            formatter: ({ datum: { value, entity, config } }) => formatValue3(value, entity, config)
           },
           tooltip: {
-            renderer: ({ datum: { name, value, entity } }) => formatPieTooltip(name, value, entity)
+            renderer: ({ datum: { name, value, entity, config } }) => formatPieTooltip(name, value, entity, config)
           },
           listeners: {
             nodeClick: ({ datum }) => performAction(datum.config, context.elements?.rootDiv)
@@ -93155,7 +93175,7 @@ async function updateData(context, hass) {
         const e5 = readEntityConfig(hass, c4);
         return {
           name: e5.name,
-          value: Number(hass.states[e5.entity]?.state ?? 0),
+          value: Number(hass.states[e5.entity]?.state ?? 0) * (e5.yMultiplier ?? 1),
           entity: hass.states[e5.entity],
           config: e5
         };
