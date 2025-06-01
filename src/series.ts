@@ -136,7 +136,7 @@ function generateSeriesOpts(context: Context, hass: Hass) {
         }
     }
 
-    for (const { type, calloutLabel, sectorLabel } of pieSeries) {
+    for (const { type, calloutLabel = 'name', sectorLabel = 'value' } of pieSeries) {
         const calloutOpts: Pick<AgPieSeriesOptions, 'calloutLabelKey' | 'calloutLabel'> = {};
         if (calloutLabel === 'name') {
             calloutOpts.calloutLabelKey = 'name';

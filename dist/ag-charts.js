@@ -93101,7 +93101,7 @@ function generateSeriesOpts(context, hass) {
         throw new Error("type not recognised: " + type);
     }
   }
-  for (const { type, calloutLabel, sectorLabel } of pieSeries) {
+  for (const { type, calloutLabel = "name", sectorLabel = "value" } of pieSeries) {
     const calloutOpts = {};
     if (calloutLabel === "name") {
       calloutOpts.calloutLabelKey = "name";
