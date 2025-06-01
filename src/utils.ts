@@ -1,3 +1,4 @@
+import { AgTooltipRendererResult } from 'ag-charts-community';
 import { ConfigEntity, Entity, Hass, HassEntity } from './types';
 
 export function appendUnknownValue(
@@ -30,8 +31,13 @@ export function formatValue(value: number, entity: HassEntity, config?: Entity) 
     return `${value}${unit}`;
 }
 
-export function formatPieTooltip(name: string, value: number, entity: HassEntity, config?: Entity) {
-    return { title: name, content: formatValue(value, entity, config) };
+export function formatPieTooltip(
+    name: string,
+    value: number,
+    entity: HassEntity,
+    config?: Entity
+): AgTooltipRendererResult {
+    return { title: name, data: [{ label: '', value: formatValue(value, entity, config) }] };
 }
 
 export function syntheticDatum(name: string, value: number, uom?: string) {

@@ -92921,7 +92921,7 @@ function formatValue3(value, entity, config) {
   return `${value}${unit}`;
 }
 function formatPieTooltip(name, value, entity, config) {
-  return { title: name, content: formatValue3(value, entity, config) };
+  return { title: name, data: [{ label: "", value: formatValue3(value, entity, config) }] };
 }
 function syntheticDatum(name, value, uom) {
   return {
