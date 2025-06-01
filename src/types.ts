@@ -31,6 +31,8 @@ export type Entity = string | ConfigEntity;
 
 export interface PieSeries {
     type: 'pie';
+    calloutLabel?: 'name' | 'value' | 'none';
+    sectorLabel?: 'name' | 'value' | 'both' | 'none';
 }
 
 export interface CartesianSeries {

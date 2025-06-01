@@ -136,18 +136,45 @@ function generateSeriesOpts(context: Context, hass: Hass) {
         }
     }
 
-    for (const { type } of pieSeries) {
+    for (const { type, calloutLabel, sectorLabel } of pieSeries) {
+        const calloutOpts: Pick<AgPieSeriesOptions, 'calloutLabelKey' | 'calloutLabel'> = {};
+        if (calloutLabel === 'name') {
+            calloutOpts.calloutLabelKey = 'name';
+        } else if (calloutLabel === 'value') {
+            calloutOpts.calloutLabelKey = 'value';
+            calloutOpts.calloutLabel = {
+                formatter: ({ datum: { value, entity, config } }) => {
+                    return formatValue(value, entity, config);
+                },
+            };
+        }
+
+        const sectorOpts: Pick<AgPieSeriesOptions, 'sectorLabelKey' | 'sectorLabel'> = {};
+        if (sectorLabel === 'name') {
+            sectorOpts.sectorLabelKey = 'name';
+        } else if (sectorLabel === 'value') {
+            sectorOpts.sectorLabelKey = 'value';
+            sectorOpts.sectorLabel = {
+                formatter: ({ datum: { value, entity, config } }) => {
+                    return formatValue(value, entity, config);
+                },
+            };
+        } else if (sectorLabel === 'both') {
+            sectorOpts.sectorLabelKey = 'value';
+            sectorOpts.sectorLabel = {
+                formatter: ({ datum: { value, entity, config } }) => {
+                    return `${config?.name}\n${formatValue(value, entity, config)}`;
+                },
+            };
+        }
+
         switch (type) {
             case 'pie':
                 seriesOpts.push({
                     type: 'pie',
-                    calloutLabelKey: 'name',
                     angleKey: 'value',
-                    sectorLabelKey: 'value',
-                    sectorLabel: {
-                        formatter: ({ datum: { value, entity, config } }) =>
-                            formatValue(value, entity, config),
-                    },
+                    ...calloutOpts,
+                    ...sectorOpts,
                     tooltip: {
                         renderer: ({ datum: { name, value, entity, config } }) =>
                             formatPieTooltip(name, value, entity, config),

@@ -93101,17 +93101,44 @@ function generateSeriesOpts(context, hass) {
         throw new Error("type not recognised: " + type);
     }
   }
-  for (const { type } of pieSeries) {
+  for (const { type, calloutLabel, sectorLabel } of pieSeries) {
+    const calloutOpts = {};
+    if (calloutLabel === "name") {
+      calloutOpts.calloutLabelKey = "name";
+    } else if (calloutLabel === "value") {
+      calloutOpts.calloutLabelKey = "value";
+      calloutOpts.calloutLabel = {
+        formatter: ({ datum: { value, entity, config } }) => {
+          return formatValue3(value, entity, config);
+        }
+      };
+    }
+    const sectorOpts = {};
+    if (sectorLabel === "name") {
+      sectorOpts.sectorLabelKey = "name";
+    } else if (sectorLabel === "value") {
+      sectorOpts.sectorLabelKey = "value";
+      sectorOpts.sectorLabel = {
+        formatter: ({ datum: { value, entity, config } }) => {
+          return formatValue3(value, entity, config);
+        }
+      };
+    } else if (sectorLabel === "both") {
+      sectorOpts.sectorLabelKey = "value";
+      sectorOpts.sectorLabel = {
+        formatter: ({ datum: { value, entity, config } }) => {
+          return `${config?.name}
+${formatValue3(value, entity, config)}`;
+        }
+      };
+    }
     switch (type) {
       case "pie":
         seriesOpts.push({
           type: "pie",
-          calloutLabelKey: "name",
           angleKey: "value",
-          sectorLabelKey: "value",
-          sectorLabel: {
-            formatter: ({ datum: { value, entity, config } }) => formatValue3(value, entity, config)
-          },
+          ...calloutOpts,
+          ...sectorOpts,
           tooltip: {
             renderer: ({ datum: { name, value, entity, config } }) => formatPieTooltip(name, value, entity, config)
           },
