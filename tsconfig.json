@@ -26,16 +26,7 @@
     },
     "include": [
         "*.ts",
-        "src/actions.ts",
-        "src/ag-charts.ts",
-        "src/config-schema.ts",
-        "src/data.ts",
-        "src/dom.ts",
-        "src/ha-ag-charts-editor.ts",
-        "src/series.ts",
-        "src/stats.ts",
-        "src/types.ts",
-        "src/utils.ts"
+        "src/**/*.ts"
     ],
     "exclude": ["node_modules", "dist"]
 }

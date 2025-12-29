@@ -109839,102 +109839,524 @@ function r6(r7) {
   return n4({ ...r7, state: true, attribute: false });
 }
 
+// src/editor/entity-editor.ts
+var ADVANCED_SCHEMA = [
+  { name: "name", selector: { text: {} } },
+  {
+    type: "grid",
+    name: "",
+    schema: [
+      { name: "fill", selector: { text: {} } },
+      { name: "stroke", selector: { text: {} } }
+    ]
+  },
+  {
+    type: "grid",
+    name: "",
+    schema: [
+      { name: "yMultiplier", selector: { number: { mode: "box", step: 0.01 } } },
+      { name: "yUnits", selector: { text: {} } }
+    ]
+  },
+  { name: "offsetXs", selector: { number: { mode: "box" } } },
+  {
+    name: "action",
+    selector: {
+      select: {
+        options: [
+          { value: "", label: "None" },
+          { value: "more-info", label: "More Info" },
+          { value: "navigate", label: "Navigate" }
+        ]
+      }
+    }
+  },
+  { name: "path", selector: { text: {} } }
+];
+var LABELS = {
+  name: "Display Name",
+  fill: "Fill Color",
+  stroke: "Stroke Color",
+  yMultiplier: "Y Multiplier",
+  yUnits: "Y Units",
+  offsetXs: "X Offset (seconds)",
+  action: "Click Action",
+  path: "Navigation Path"
+};
+var AgChartsEntityEditor = class extends r4 {
+  constructor() {
+    super(...arguments);
+    this._computeLabel = (schema) => {
+      return LABELS[schema.name] || schema.name;
+    };
+  }
+  _entityChanged(ev) {
+    ev.stopPropagation();
+    const newEntity = { ...this.entity, entity: ev.detail.value };
+    this._fireChanged(newEntity);
+  }
+  _advancedChanged(ev) {
+    ev.stopPropagation();
+    const newEntity = { ...this.entity, ...ev.detail.value };
+    this._fireChanged(newEntity);
+  }
+  _fireChanged(entity) {
+    this.dispatchEvent(
+      new CustomEvent("entity-changed", {
+        detail: { index: this.index, entity },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  _remove() {
+    this.dispatchEvent(
+      new CustomEvent("entity-removed", {
+        detail: { index: this.index },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  render() {
+    const showPath = this.entity.action === "navigate";
+    const advancedData = { ...this.entity };
+    delete advancedData.entity;
+    const filteredSchema = ADVANCED_SCHEMA.filter(
+      (s3) => s3.name !== "path" || showPath
+    );
+    return x`
+            <div style="display: block; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <ha-entity-picker
+                        style="flex: 1;"
+                        .hass=${this.hass}
+                        .value=${this.entity.entity}
+                        @value-changed=${this._entityChanged}
+                        allow-custom-entity
+                    ></ha-entity-picker>
+                    <ha-icon-button
+                        .path=${"M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"}
+                        @click=${this._remove}
+                    ></ha-icon-button>
+                </div>
+                <ha-expansion-panel outlined style="margin-top: 4px;">
+                    <span slot="header">Advanced Options</span>
+                    <div style="padding: 8px;">
+                        <ha-form
+                            .hass=${this.hass}
+                            .data=${advancedData}
+                            .schema=${filteredSchema}
+                            .computeLabel=${this._computeLabel}
+                            @value-changed=${this._advancedChanged}
+                        ></ha-form>
+                    </div>
+                </ha-expansion-panel>
+            </div>
+        `;
+  }
+};
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsEntityEditor.prototype, "hass", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsEntityEditor.prototype, "entity", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsEntityEditor.prototype, "index", 2);
+AgChartsEntityEditor = __decorateClass([
+  t3("ag-charts-entity-editor")
+], AgChartsEntityEditor);
+
+// src/editor/series-editor.ts
+var CARTESIAN_SCHEMA = [
+  {
+    name: "type",
+    selector: {
+      select: {
+        options: [
+          { value: "line", label: "Line" },
+          { value: "area", label: "Area" },
+          { value: "bar", label: "Bar" },
+          { value: "pie", label: "Pie" }
+        ]
+      }
+    }
+  },
+  { name: "stacked", selector: { boolean: {} } },
+  {
+    type: "grid",
+    name: "",
+    schema: [
+      { name: "minY", selector: { number: { mode: "box" } } },
+      { name: "maxY", selector: { number: { mode: "box" } } }
+    ]
+  }
+];
+var PIE_SCHEMA = [
+  {
+    name: "type",
+    selector: {
+      select: {
+        options: [
+          { value: "line", label: "Line" },
+          { value: "area", label: "Area" },
+          { value: "bar", label: "Bar" },
+          { value: "pie", label: "Pie" }
+        ]
+      }
+    }
+  },
+  {
+    name: "calloutLabel",
+    selector: {
+      select: {
+        options: [
+          { value: "name", label: "Name" },
+          { value: "value", label: "Value" },
+          { value: "none", label: "None" }
+        ]
+      }
+    }
+  },
+  {
+    name: "sectorLabel",
+    selector: {
+      select: {
+        options: [
+          { value: "name", label: "Name" },
+          { value: "value", label: "Value" },
+          { value: "both", label: "Both" },
+          { value: "none", label: "None" }
+        ]
+      }
+    }
+  }
+];
+var LABELS2 = {
+  type: "Chart Type",
+  stacked: "Stacked",
+  minY: "Min Y",
+  maxY: "Max Y",
+  calloutLabel: "Callout Label",
+  sectorLabel: "Sector Label"
+};
+var AgChartsSeriesEditor = class extends r4 {
+  constructor() {
+    super(...arguments);
+    this._computeLabel = (schema) => {
+      return LABELS2[schema.name] || schema.name;
+    };
+  }
+  _seriesChanged(ev) {
+    ev.stopPropagation();
+    const newSeries = { ...this.series, ...ev.detail.value };
+    if (newSeries.type === "pie" && "entities" in newSeries) {
+      delete newSeries.entities;
+      delete newSeries.stacked;
+      delete newSeries.minY;
+      delete newSeries.maxY;
+    } else if (newSeries.type !== "pie" && !("entities" in newSeries)) {
+      newSeries.entities = [];
+      delete newSeries.calloutLabel;
+      delete newSeries.sectorLabel;
+    }
+    this._fireChanged(newSeries);
+  }
+  _entityChanged(ev) {
+    ev.stopPropagation();
+    const { index, entity } = ev.detail;
+    const cartesian = this.series;
+    const entities = [...cartesian.entities];
+    entities[index] = entity;
+    this._fireChanged({ ...cartesian, entities });
+  }
+  _entityRemoved(ev) {
+    ev.stopPropagation();
+    const { index } = ev.detail;
+    const cartesian = this.series;
+    const entities = cartesian.entities.filter((_2, i5) => i5 !== index);
+    this._fireChanged({ ...cartesian, entities });
+  }
+  _addEntity() {
+    const cartesian = this.series;
+    const entities = [...cartesian.entities || []];
+    entities.push({ entity: "" });
+    this._fireChanged({ ...cartesian, entities });
+  }
+  _fireChanged(series) {
+    this.dispatchEvent(
+      new CustomEvent("series-changed", {
+        detail: { index: this.index, series },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  _remove() {
+    this.dispatchEvent(
+      new CustomEvent("series-removed", {
+        detail: { index: this.index },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  _normalizeEntity(entity) {
+    return typeof entity === "string" ? { entity } : entity;
+  }
+  render() {
+    const isPie = this.series.type === "pie";
+    const schema = isPie ? PIE_SCHEMA : CARTESIAN_SCHEMA;
+    const entities = isPie ? [] : this.series.entities || [];
+    return x`
+            <div style="display: block; margin-bottom: 16px;">
+                <ha-expansion-panel outlined expanded>
+                    <div slot="header" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <span>Series ${this.index + 1}: ${this.series.type}</span>
+                        <ha-icon-button
+                            style="margin-right: -8px;"
+                            .path=${"M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"}
+                            @click=${this._remove}
+                        ></ha-icon-button>
+                    </div>
+                    <div style="padding: 16px;">
+                        <ha-form
+                            .hass=${this.hass}
+                            .data=${this.series}
+                            .schema=${schema}
+                            .computeLabel=${this._computeLabel}
+                            @value-changed=${this._seriesChanged}
+                        ></ha-form>
+
+                        ${!isPie ? x`
+                                  <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--divider-color);">
+                                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                          <h4 style="margin: 0;">Entities</h4>
+                                          <ha-button @click=${this._addEntity}>
+                                              Add Entity
+                                          </ha-button>
+                                      </div>
+                                      ${entities.map(
+      (entity, i5) => x`
+                                              <ag-charts-entity-editor
+                                                  .hass=${this.hass}
+                                                  .entity=${this._normalizeEntity(entity)}
+                                                  .index=${i5}
+                                                  @entity-changed=${this._entityChanged}
+                                                  @entity-removed=${this._entityRemoved}
+                                              ></ag-charts-entity-editor>
+                                          `
+    )}
+                                      ${entities.length === 0 ? x`<p style="color: var(--secondary-text-color); font-style: italic; margin: 8px 0;">
+                                                No entities configured. Click "Add Entity" to add one.
+                                            </p>` : ""}
+                                  </div>
+                              ` : ""}
+                    </div>
+                </ha-expansion-panel>
+            </div>
+        `;
+  }
+};
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsSeriesEditor.prototype, "hass", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsSeriesEditor.prototype, "series", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsSeriesEditor.prototype, "index", 2);
+AgChartsSeriesEditor = __decorateClass([
+  t3("ag-charts-series-editor")
+], AgChartsSeriesEditor);
+
+// src/editor/series-list-editor.ts
+var AgChartsSeriesListEditor = class extends r4 {
+  constructor() {
+    super(...arguments);
+    this.series = [];
+  }
+  _seriesChanged(ev) {
+    ev.stopPropagation();
+    const { index, series } = ev.detail;
+    const newSeries = [...this.series];
+    newSeries[index] = series;
+    this._fireChanged(newSeries);
+  }
+  _seriesRemoved(ev) {
+    ev.stopPropagation();
+    const { index } = ev.detail;
+    const newSeries = this.series.filter((_2, i5) => i5 !== index);
+    this._fireChanged(newSeries);
+  }
+  _addSeries() {
+    const newSeries = [...this.series];
+    newSeries.push({ type: "line", entities: [] });
+    this._fireChanged(newSeries);
+  }
+  _fireChanged(series) {
+    this.dispatchEvent(
+      new CustomEvent("series-changed", {
+        detail: { series },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  render() {
+    return x`
+            <div style="display: block;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                    <h3 style="margin: 0;">Series</h3>
+                    <ha-button @click=${this._addSeries}>Add Series</ha-button>
+                </div>
+                ${this.series.map(
+      (series, i5) => x`
+                        <ag-charts-series-editor
+                            .hass=${this.hass}
+                            .series=${series}
+                            .index=${i5}
+                            @series-changed=${this._seriesChanged}
+                            @series-removed=${this._seriesRemoved}
+                        ></ag-charts-series-editor>
+                    `
+    )}
+                ${this.series.length === 0 ? x`<p style="color: var(--secondary-text-color); font-style: italic; text-align: center; padding: 16px;">
+                          No series configured. Click "Add Series" to create one.
+                      </p>` : ""}
+            </div>
+        `;
+  }
+};
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsSeriesListEditor.prototype, "hass", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsSeriesListEditor.prototype, "series", 2);
+AgChartsSeriesListEditor = __decorateClass([
+  t3("ag-charts-series-list-editor")
+], AgChartsSeriesListEditor);
+
 // src/ha-ag-charts-editor.ts
+var THEMES = [
+  { value: "ag-default", label: "Default" },
+  { value: "ag-default-dark", label: "Default Dark" },
+  { value: "ag-material", label: "Material" },
+  { value: "ag-material-dark", label: "Material Dark" },
+  { value: "ag-vivid", label: "Vivid" },
+  { value: "ag-vivid-dark", label: "Vivid Dark" }
+];
+var SCHEMA = [
+  { name: "title", selector: { text: {} } },
+  {
+    name: "theme",
+    selector: {
+      select: {
+        options: THEMES
+      }
+    }
+  },
+  {
+    type: "grid",
+    name: "",
+    schema: [
+      {
+        name: "period",
+        selector: { number: { min: 1, max: 365, mode: "box", unit_of_measurement: "days" } }
+      },
+      {
+        name: "refresh",
+        selector: { number: { min: 1, mode: "box", unit_of_measurement: "seconds" } }
+      }
+    ]
+  },
+  {
+    type: "grid",
+    name: "",
+    schema: [
+      {
+        name: "legend",
+        selector: {
+          select: {
+            options: [
+              { value: "", label: "Default" },
+              { value: "left", label: "Left" },
+              { value: "right", label: "Right" },
+              { value: "top", label: "Top" },
+              { value: "bottom", label: "Bottom" },
+              { value: "none", label: "None" }
+            ]
+          }
+        }
+      },
+      {
+        name: "yAxis",
+        selector: {
+          select: {
+            options: [
+              { value: "visible", label: "Visible" },
+              { value: "hidden", label: "Hidden" }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    type: "expandable",
+    name: "",
+    title: "Pie Chart Options",
+    schema: [
+      { name: "total", selector: { entity: {} } },
+      {
+        name: "totalMultiplier",
+        selector: { number: { mode: "box", step: 0.01 } }
+      },
+      { name: "unknownName", selector: { text: {} } }
+    ]
+  }
+];
+var LABELS3 = {
+  title: "Title",
+  theme: "Theme",
+  period: "Period",
+  refresh: "Refresh Interval",
+  legend: "Legend Position",
+  yAxis: "Y-Axis",
+  total: "Total Entity",
+  totalMultiplier: "Total Multiplier",
+  unknownName: "Unknown Value Name"
+};
 var HAAgChartsEditor = class extends r4 {
   constructor() {
     super(...arguments);
-    this._series = [];
-    this._title = "";
-    this._theme = "ag-default-dark";
-    this._refresh = 5;
-    this._interval = "5minutes";
-    this._period = 1;
-    this._totalMultiplier = 1;
-    this._unknownName = "Unknown";
-    this._themes = [
-      "ag-default",
-      "ag-default-dark",
-      "ag-material",
-      "ag-material-dark",
-      "ag-vivid",
-      "ag-vivid-dark"
-    ];
+    this._computeLabel = (schema) => {
+      return LABELS3[schema.name] || schema.name;
+    };
   }
-  firstUpdated() {
-    if (this.config) {
-      this._series = this.config.series || [];
-      this._title = this.config.title || "";
-      this._theme = this.config.theme || "ag-default-dark";
-      this._refresh = this.config.refresh || 5;
-      this._interval = this.config.interval || "5minutes";
-      this._period = this.config.period || 1;
-      this._legend = this.config.legend;
-      this._total = this.config.total;
-      this._totalMultiplier = this.config.totalMultiplier || 1;
-      this._unknownName = this.config.unknownName || "Unknown";
-    }
+  setConfig(config) {
+    this._config = config;
   }
   _valueChanged(ev) {
-    const target = ev.target;
-    const value = target.value;
-    const name = target.name;
-    if (name.startsWith("series.")) {
-      const [_2, index, field] = name.split(".");
-      if (!this._series[index]) {
-        this._series[index] = { type: "line", entities: [] };
-      }
-      if (field === "type") {
-        this._series[index].type = value;
-      } else if (field.startsWith("entities.")) {
-        const [__, entityIndex, entityField] = field.split(".");
-        const series = this._series[index];
-        if (!series.entities) {
-          series.entities = [];
-        }
-        if (!series.entities[entityIndex]) {
-          series.entities[entityIndex] = { entity: "" };
-        }
-        series.entities[entityIndex][entityField] = value;
-      }
-    } else {
-      this[`_${name}`] = value;
-    }
-    this._fireConfigChanged();
+    ev.stopPropagation();
+    if (!this._config)
+      return;
+    const newConfig = { ...this._config, ...ev.detail.value };
+    this._fireConfigChanged(newConfig);
   }
-  _addSeries() {
-    this._series = [...this._series, { type: "line", entities: [{ entity: "" }] }];
-    this._fireConfigChanged();
+  _seriesChanged(ev) {
+    ev.stopPropagation();
+    if (!this._config)
+      return;
+    const newConfig = { ...this._config, series: ev.detail.series };
+    this._fireConfigChanged(newConfig);
   }
-  _removeSeries(index) {
-    this._series = this._series.filter((_2, i5) => i5 !== index);
-    this._fireConfigChanged();
-  }
-  _addEntity(seriesIndex) {
-    const series = this._series[seriesIndex];
-    if (!series.entities) {
-      series.entities = [];
-    }
-    series.entities.push({ entity: "" });
-    this._fireConfigChanged();
-  }
-  _removeEntity(seriesIndex, entityIndex) {
-    const series = this._series[seriesIndex];
-    series.entities = series.entities.filter((_2, i5) => i5 !== entityIndex);
-    this._fireConfigChanged();
-  }
-  _fireConfigChanged() {
-    const config = {
-      title: this._title,
-      theme: this._theme,
-      series: this._series,
-      refresh: this._refresh,
-      interval: this._interval,
-      period: this._period,
-      legend: this._legend,
-      total: this._total,
-      totalMultiplier: this._totalMultiplier,
-      unknownName: this._unknownName
-    };
+  _fireConfigChanged(config) {
+    this._config = config;
     this.dispatchEvent(
       new CustomEvent("config-changed", {
         detail: { config },
@@ -109944,270 +110366,36 @@ var HAAgChartsEditor = class extends r4 {
     );
   }
   render() {
+    if (!this.hass || !this._config) {
+      return x``;
+    }
     return x`
-            <div class="card-config">
-                <ha-textfield
-                    label="Title"
-                    name="title"
-                    .value=${this._title}
-                    @change=${this._valueChanged}
-                ></ha-textfield>
+            <div style="padding: 16px;">
+                <ha-form
+                    .hass=${this.hass}
+                    .data=${this._config}
+                    .schema=${SCHEMA}
+                    .computeLabel=${this._computeLabel}
+                    @value-changed=${this._valueChanged}
+                ></ha-form>
 
-                <ha-select
-                    label="Theme"
-                    name="theme"
-                    .value=${this._theme}
-                    @change=${this._valueChanged}
-                >
-                    ${this._themes.map(
-      (theme) => x`<mwc-list-item .value=${theme}>${theme}</mwc-list-item>`
-    )}
-                </ha-select>
-
-                <ha-textfield
-                    label="Refresh Interval (seconds)"
-                    name="refresh"
-                    type="number"
-                    .value=${this._refresh}
-                    @change=${this._valueChanged}
-                ></ha-textfield>
-
-                <ha-select
-                    label="Interval"
-                    name="interval"
-                    .value=${this._interval}
-                    @change=${this._valueChanged}
-                >
-                    <mwc-list-item value="5minutes">5 minutes</mwc-list-item>
-                </ha-select>
-
-                <ha-textfield
-                    label="Period (days)"
-                    name="period"
-                    type="number"
-                    .value=${this._period}
-                    @change=${this._valueChanged}
-                ></ha-textfield>
-
-                <ha-select
-                    label="Legend Position"
-                    name="legend"
-                    .value=${this._legend}
-                    @change=${this._valueChanged}
-                >
-                    <mwc-list-item value="left">Left</mwc-list-item>
-                    <mwc-list-item value="right">Right</mwc-list-item>
-                    <mwc-list-item value="top">Top</mwc-list-item>
-                    <mwc-list-item value="bottom">Bottom</mwc-list-item>
-                    <mwc-list-item value="none">None</mwc-list-item>
-                </ha-select>
-
-                <ha-entity-picker
-                    label="Total Entity"
-                    name="total"
-                    .value=${this._total}
-                    @change=${this._valueChanged}
-                ></ha-entity-picker>
-
-                <ha-textfield
-                    label="Total Multiplier"
-                    name="totalMultiplier"
-                    type="number"
-                    .value=${this._totalMultiplier}
-                    @change=${this._valueChanged}
-                ></ha-textfield>
-
-                <ha-textfield
-                    label="Unknown Value Name"
-                    name="unknownName"
-                    .value=${this._unknownName}
-                    @change=${this._valueChanged}
-                ></ha-textfield>
-
-                <div class="series-section">
-                    <h3>Series</h3>
-                    ${this._series.map(
-      (series, seriesIndex) => x`
-                            <div class="series-item">
-                                <ha-select
-                                    label="Type"
-                                    name="series.${seriesIndex}.type"
-                                    .value=${series.type}
-                                    @change=${this._valueChanged}
-                                >
-                                    <mwc-list-item value="area">Area</mwc-list-item>
-                                    <mwc-list-item value="bar">Bar</mwc-list-item>
-                                    <mwc-list-item value="line">Line</mwc-list-item>
-                                    <mwc-list-item value="pie">Pie</mwc-list-item>
-                                </ha-select>
-
-                                ${series.type !== "pie" ? x`
-                                          <div class="entities-section">
-                                              <h4>Entities</h4>
-                                              ${series.entities?.map(
-        (entity, entityIndex) => x`
-                                                      <div class="entity-item">
-                                                          <ha-entity-picker
-                                                              label="Entity"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.entity"
-                                                              .value=${typeof entity === "string" ? entity : entity.entity}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-entity-picker>
-                                                          <ha-textfield
-                                                              label="Name"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.name"
-                                                              .value=${typeof entity === "string" ? "" : entity.name}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-select
-                                                              label="Action"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.action"
-                                                              .value=${typeof entity === "string" ? "" : entity.action}
-                                                              @change=${this._valueChanged}
-                                                          >
-                                                              <mwc-list-item value="more-info"
-                                                                  >More Info</mwc-list-item
-                                                              >
-                                                              <mwc-list-item value="navigate"
-                                                                  >Navigate</mwc-list-item
-                                                              >
-                                                          </ha-select>
-                                                          ${typeof entity !== "string" && entity.action === "navigate" ? x`
-                                                                    <ha-textfield
-                                                                        label="Path"
-                                                                        name="series.${seriesIndex}.entities.${entityIndex}.path"
-                                                                        .value=${entity.path}
-                                                                        @change=${this._valueChanged}
-                                                                    ></ha-textfield>
-                                                                ` : ""}
-                                                          <ha-textfield
-                                                              label="X Offset (seconds)"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.offsetXs"
-                                                              type="number"
-                                                              .value=${typeof entity === "string" ? "" : entity.offsetXs}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-textfield
-                                                              label="Y Multiplier"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.yMultiplier"
-                                                              type="number"
-                                                              .value=${typeof entity === "string" ? "" : entity.yMultiplier}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-textfield
-                                                              label="Y Units"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.yUnits"
-                                                              .value=${typeof entity === "string" ? "" : entity.yUnits}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-textfield
-                                                              label="Fill Color"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.fill"
-                                                              .value=${typeof entity === "string" ? "" : entity.fill}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-textfield
-                                                              label="Stroke Color"
-                                                              name="series.${seriesIndex}.entities.${entityIndex}.stroke"
-                                                              .value=${typeof entity === "string" ? "" : entity.stroke}
-                                                              @change=${this._valueChanged}
-                                                          ></ha-textfield>
-                                                          <ha-icon-button
-                                                              icon="hass:delete"
-                                                              @click=${() => this._removeEntity(
-          seriesIndex,
-          entityIndex
-        )}
-                                                          ></ha-icon-button>
-                                                      </div>
-                                                  `
-      )}
-                                              <ha-button
-                                                  @click=${() => this._addEntity(seriesIndex)}
-                                              >
-                                                  Add Entity
-                                              </ha-button>
-                                          </div>
-                                      ` : ""}
-
-                                <ha-icon-button
-                                    icon="hass:delete"
-                                    @click=${() => this._removeSeries(seriesIndex)}
-                                ></ha-icon-button>
-                            </div>
-                        `
-    )}
-                    <ha-button @click=${this._addSeries}>Add Series</ha-button>
+                <div style="margin-top: 24px;">
+                    <ag-charts-series-list-editor
+                        .hass=${this.hass}
+                        .series=${this._config.series || []}
+                        @series-changed=${this._seriesChanged}
+                    ></ag-charts-series-list-editor>
                 </div>
             </div>
         `;
   }
 };
-HAAgChartsEditor.styles = `
-    .card-config {
-      padding: 16px;
-    }
-    .series-section {
-      margin-top: 16px;
-    }
-    .series-item {
-      margin: 16px 0;
-      padding: 16px;
-      border: 1px solid var(--divider-color);
-      border-radius: 4px;
-    }
-    .entities-section {
-      margin-top: 16px;
-    }
-    .entity-item {
-      margin: 8px 0;
-      padding: 8px;
-      border: 1px solid var(--divider-color);
-      border-radius: 4px;
-    }
-    ha-textfield,
-    ha-select,
-    ha-entity-picker {
-      display: block;
-      margin: 8px 0;
-    }
-  `;
 __decorateClass([
   n4({ attribute: false })
 ], HAAgChartsEditor.prototype, "hass", 2);
 __decorateClass([
-  n4({ attribute: false })
-], HAAgChartsEditor.prototype, "config", 2);
-__decorateClass([
   r6()
-], HAAgChartsEditor.prototype, "_series", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_title", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_theme", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_refresh", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_interval", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_period", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_legend", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_total", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_totalMultiplier", 2);
-__decorateClass([
-  r6()
-], HAAgChartsEditor.prototype, "_unknownName", 2);
+], HAAgChartsEditor.prototype, "_config", 2);
 HAAgChartsEditor = __decorateClass([
   t3("ha-ag-charts-editor")
 ], HAAgChartsEditor);
@@ -110224,7 +110412,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.3`,
+%cVersion: 0.2.0-beta.4`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
