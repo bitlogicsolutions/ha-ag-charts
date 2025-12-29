@@ -110426,10 +110426,10 @@ var HAAgChartsEditor = class extends r4 {
     return (this._config?.series || []).some((s3) => s3.type === "pie");
   }
   _getSchema() {
-    if (this._hasPieSeries()) {
-      return [...BASE_SCHEMA, PIE_OPTIONS_SCHEMA];
-    }
     return BASE_SCHEMA;
+  }
+  _getPieSchema() {
+    return [PIE_OPTIONS_SCHEMA];
   }
   render() {
     if (!this.hass || !this._config) {
@@ -110447,7 +110447,25 @@ var HAAgChartsEditor = class extends r4 {
                     @value-changed=${this._valueChanged}
                 ></ha-form>
 
+                <div style="margin-top: 24px;">
+                    <ag-charts-series-list-editor
+                        .hass=${this.hass}
+                        .series=${this._config.series || []}
+                        @series-changed=${this._seriesChanged}
+                    ></ag-charts-series-list-editor>
+                </div>
+
                 ${hasPie ? x`
+                          <div style="margin-top: 24px;">
+                              <ha-form
+                                  .hass=${this.hass}
+                                  .data=${this._config}
+                                  .schema=${this._getPieSchema()}
+                                  .computeLabel=${this._computeLabel}
+                                  @value-changed=${this._valueChanged}
+                              ></ha-form>
+                          </div>
+
                           <div style="margin-top: 16px; padding: 16px; border: 1px solid var(--divider-color); border-radius: 8px;">
                               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                   <h3 style="margin: 0; font-size: 16px;">Pie Entities</h3>
@@ -110471,14 +110489,6 @@ var HAAgChartsEditor = class extends r4 {
                                     </p>` : ""}
                           </div>
                       ` : ""}
-
-                <div style="margin-top: 24px;">
-                    <ag-charts-series-list-editor
-                        .hass=${this.hass}
-                        .series=${this._config.series || []}
-                        @series-changed=${this._seriesChanged}
-                    ></ag-charts-series-list-editor>
-                </div>
             </div>
         `;
   }
@@ -110505,7 +110515,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.8`,
+%cVersion: 0.2.0-beta.9`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
