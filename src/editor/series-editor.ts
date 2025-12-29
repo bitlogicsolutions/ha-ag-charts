@@ -11,17 +11,20 @@ declare global {
 
 type Series = CartesianSeries | PieSeries;
 
+const TYPE_OPTIONS = [
+    { value: 'line', label: 'Line' },
+    { value: 'area', label: 'Area' },
+    { value: 'bar', label: 'Bar' },
+    { value: 'pie', label: 'Pie' },
+];
+
 const CARTESIAN_SCHEMA = [
     {
         name: 'type',
         selector: {
             select: {
-                options: [
-                    { value: 'line', label: 'Line' },
-                    { value: 'area', label: 'Area' },
-                    { value: 'bar', label: 'Bar' },
-                    { value: 'pie', label: 'Pie' },
-                ],
+                mode: 'dropdown',
+                options: TYPE_OPTIONS,
             },
         },
     },
@@ -41,44 +44,48 @@ const PIE_SCHEMA = [
         name: 'type',
         selector: {
             select: {
-                options: [
-                    { value: 'line', label: 'Line' },
-                    { value: 'area', label: 'Area' },
-                    { value: 'bar', label: 'Bar' },
-                    { value: 'pie', label: 'Pie' },
-                ],
+                mode: 'dropdown',
+                options: TYPE_OPTIONS,
             },
         },
     },
     {
-        name: 'calloutLabel',
-        selector: {
-            select: {
-                options: [
-                    { value: 'name', label: 'Name' },
-                    { value: 'value', label: 'Value' },
-                    { value: 'none', label: 'None' },
-                ],
+        type: 'grid',
+        name: '',
+        schema: [
+            {
+                name: 'calloutLabel',
+                selector: {
+                    select: {
+                        mode: 'dropdown',
+                        options: [
+                            { value: 'name', label: 'Name' },
+                            { value: 'value', label: 'Value' },
+                            { value: 'none', label: 'None' },
+                        ],
+                    },
+                },
             },
-        },
-    },
-    {
-        name: 'sectorLabel',
-        selector: {
-            select: {
-                options: [
-                    { value: 'name', label: 'Name' },
-                    { value: 'value', label: 'Value' },
-                    { value: 'both', label: 'Both' },
-                    { value: 'none', label: 'None' },
-                ],
+            {
+                name: 'sectorLabel',
+                selector: {
+                    select: {
+                        mode: 'dropdown',
+                        options: [
+                            { value: 'name', label: 'Name' },
+                            { value: 'value', label: 'Value' },
+                            { value: 'both', label: 'Both' },
+                            { value: 'none', label: 'None' },
+                        ],
+                    },
+                },
             },
-        },
+        ],
     },
 ];
 
 const LABELS: Record<string, string> = {
-    type: 'Chart Type',
+    type: 'Type',
     stacked: 'Stacked',
     minY: 'Min Y',
     maxY: 'Max Y',

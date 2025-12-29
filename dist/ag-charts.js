@@ -109840,6 +109840,8 @@ function r6(r7) {
 }
 
 // src/editor/entity-editor.ts
+var MDI_PENCIL = "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z";
+var MDI_DELETE = "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z";
 var ADVANCED_SCHEMA = [
   { name: "name", selector: { text: {} } },
   {
@@ -109863,6 +109865,7 @@ var ADVANCED_SCHEMA = [
     name: "action",
     selector: {
       select: {
+        mode: "dropdown",
         options: [
           { value: "", label: "None" },
           { value: "more-info", label: "More Info" },
@@ -109886,6 +109889,7 @@ var LABELS = {
 var AgChartsEntityEditor = class extends r4 {
   constructor() {
     super(...arguments);
+    this._showAdvanced = false;
     this._computeLabel = (schema) => {
       return LABELS[schema.name] || schema.name;
     };
@@ -109918,6 +109922,9 @@ var AgChartsEntityEditor = class extends r4 {
       })
     );
   }
+  _toggleAdvanced() {
+    this._showAdvanced = !this._showAdvanced;
+  }
   render() {
     const showPath = this.entity.action === "navigate";
     const advancedData = { ...this.entity };
@@ -109926,8 +109933,8 @@ var AgChartsEntityEditor = class extends r4 {
       (s3) => s3.name !== "path" || showPath
     );
     return x`
-            <div style="display: block; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px; overflow: hidden;">
+                <div style="display: flex; align-items: center; gap: 4px; padding: 8px; background: var(--card-background-color);">
                     <ha-entity-picker
                         style="flex: 1;"
                         .hass=${this.hass}
@@ -109936,22 +109943,27 @@ var AgChartsEntityEditor = class extends r4 {
                         allow-custom-entity
                     ></ha-entity-picker>
                     <ha-icon-button
-                        .path=${"M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"}
+                        .path=${MDI_PENCIL}
+                        @click=${this._toggleAdvanced}
+                        title="Edit options"
+                    ></ha-icon-button>
+                    <ha-icon-button
+                        .path=${MDI_DELETE}
                         @click=${this._remove}
+                        title="Remove entity"
                     ></ha-icon-button>
                 </div>
-                <ha-expansion-panel outlined style="margin-top: 4px;">
-                    <span slot="header">Advanced Options</span>
-                    <div style="padding: 8px;">
-                        <ha-form
-                            .hass=${this.hass}
-                            .data=${advancedData}
-                            .schema=${filteredSchema}
-                            .computeLabel=${this._computeLabel}
-                            @value-changed=${this._advancedChanged}
-                        ></ha-form>
-                    </div>
-                </ha-expansion-panel>
+                ${this._showAdvanced ? x`
+                          <div style="padding: 12px; border-top: 1px solid var(--divider-color); background: var(--secondary-background-color);">
+                              <ha-form
+                                  .hass=${this.hass}
+                                  .data=${advancedData}
+                                  .schema=${filteredSchema}
+                                  .computeLabel=${this._computeLabel}
+                                  @value-changed=${this._advancedChanged}
+                              ></ha-form>
+                          </div>
+                      ` : ""}
             </div>
         `;
   }
@@ -109965,22 +109977,27 @@ __decorateClass([
 __decorateClass([
   n4({ attribute: false })
 ], AgChartsEntityEditor.prototype, "index", 2);
+__decorateClass([
+  r6()
+], AgChartsEntityEditor.prototype, "_showAdvanced", 2);
 AgChartsEntityEditor = __decorateClass([
   t3("ag-charts-entity-editor")
 ], AgChartsEntityEditor);
 
 // src/editor/series-editor.ts
+var TYPE_OPTIONS = [
+  { value: "line", label: "Line" },
+  { value: "area", label: "Area" },
+  { value: "bar", label: "Bar" },
+  { value: "pie", label: "Pie" }
+];
 var CARTESIAN_SCHEMA = [
   {
     name: "type",
     selector: {
       select: {
-        options: [
-          { value: "line", label: "Line" },
-          { value: "area", label: "Area" },
-          { value: "bar", label: "Bar" },
-          { value: "pie", label: "Pie" }
-        ]
+        mode: "dropdown",
+        options: TYPE_OPTIONS
       }
     }
   },
@@ -109999,43 +110016,47 @@ var PIE_SCHEMA = [
     name: "type",
     selector: {
       select: {
-        options: [
-          { value: "line", label: "Line" },
-          { value: "area", label: "Area" },
-          { value: "bar", label: "Bar" },
-          { value: "pie", label: "Pie" }
-        ]
+        mode: "dropdown",
+        options: TYPE_OPTIONS
       }
     }
   },
   {
-    name: "calloutLabel",
-    selector: {
-      select: {
-        options: [
-          { value: "name", label: "Name" },
-          { value: "value", label: "Value" },
-          { value: "none", label: "None" }
-        ]
+    type: "grid",
+    name: "",
+    schema: [
+      {
+        name: "calloutLabel",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "name", label: "Name" },
+              { value: "value", label: "Value" },
+              { value: "none", label: "None" }
+            ]
+          }
+        }
+      },
+      {
+        name: "sectorLabel",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "name", label: "Name" },
+              { value: "value", label: "Value" },
+              { value: "both", label: "Both" },
+              { value: "none", label: "None" }
+            ]
+          }
+        }
       }
-    }
-  },
-  {
-    name: "sectorLabel",
-    selector: {
-      select: {
-        options: [
-          { value: "name", label: "Name" },
-          { value: "value", label: "Value" },
-          { value: "both", label: "Both" },
-          { value: "none", label: "None" }
-        ]
-      }
-    }
+    ]
   }
 ];
 var LABELS2 = {
-  type: "Chart Type",
+  type: "Type",
   stacked: "Stacked",
   minY: "Min Y",
   maxY: "Max Y",
@@ -110250,12 +110271,13 @@ var THEMES = [
   { value: "ag-vivid", label: "Vivid" },
   { value: "ag-vivid-dark", label: "Vivid Dark" }
 ];
-var SCHEMA = [
+var BASE_SCHEMA = [
   { name: "title", selector: { text: {} } },
   {
     name: "theme",
     selector: {
       select: {
+        mode: "dropdown",
         options: THEMES
       }
     }
@@ -110282,6 +110304,7 @@ var SCHEMA = [
         name: "legend",
         selector: {
           select: {
+            mode: "dropdown",
             options: [
               { value: "", label: "Default" },
               { value: "left", label: "Left" },
@@ -110297,6 +110320,7 @@ var SCHEMA = [
         name: "yAxis",
         selector: {
           select: {
+            mode: "dropdown",
             options: [
               { value: "visible", label: "Visible" },
               { value: "hidden", label: "Hidden" }
@@ -110305,21 +110329,24 @@ var SCHEMA = [
         }
       }
     ]
-  },
-  {
-    type: "expandable",
-    name: "",
-    title: "Pie Chart Options",
-    schema: [
-      { name: "total", selector: { entity: {} } },
-      {
-        name: "totalMultiplier",
-        selector: { number: { mode: "box", step: 0.01 } }
-      },
-      { name: "unknownName", selector: { text: {} } }
-    ]
   }
 ];
+var PIE_OPTIONS_SCHEMA = {
+  type: "expandable",
+  name: "",
+  title: "Pie Chart Options",
+  schema: [
+    { name: "total", selector: { entity: {} } },
+    {
+      type: "grid",
+      name: "",
+      schema: [
+        { name: "totalMultiplier", selector: { number: { mode: "box", step: 0.01 } } },
+        { name: "unknownName", selector: { text: {} } }
+      ]
+    }
+  ]
+};
 var LABELS3 = {
   title: "Title",
   theme: "Theme",
@@ -110365,6 +110392,15 @@ var HAAgChartsEditor = class extends r4 {
       })
     );
   }
+  _hasPieSeries() {
+    return (this._config?.series || []).some((s3) => s3.type === "pie");
+  }
+  _getSchema() {
+    if (this._hasPieSeries()) {
+      return [...BASE_SCHEMA, PIE_OPTIONS_SCHEMA];
+    }
+    return BASE_SCHEMA;
+  }
   render() {
     if (!this.hass || !this._config) {
       return x``;
@@ -110374,7 +110410,7 @@ var HAAgChartsEditor = class extends r4 {
                 <ha-form
                     .hass=${this.hass}
                     .data=${this._config}
-                    .schema=${SCHEMA}
+                    .schema=${this._getSchema()}
                     .computeLabel=${this._computeLabel}
                     @value-changed=${this._valueChanged}
                 ></ha-form>
@@ -110412,7 +110448,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.4`,
+%cVersion: 0.2.0-beta.5`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

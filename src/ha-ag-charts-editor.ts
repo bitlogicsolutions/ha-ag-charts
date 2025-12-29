@@ -18,12 +18,13 @@ const THEMES = [
     { value: 'ag-vivid-dark', label: 'Vivid Dark' },
 ];
 
-const SCHEMA = [
+const BASE_SCHEMA = [
     { name: 'title', selector: { text: {} } },
     {
         name: 'theme',
         selector: {
             select: {
+                mode: 'dropdown',
                 options: THEMES,
             },
         },
@@ -50,6 +51,7 @@ const SCHEMA = [
                 name: 'legend',
                 selector: {
                     select: {
+                        mode: 'dropdown',
                         options: [
                             { value: '', label: 'Default' },
                             { value: 'left', label: 'Left' },
@@ -65,6 +67,7 @@ const SCHEMA = [
                 name: 'yAxis',
                 selector: {
                     select: {
+                        mode: 'dropdown',
                         options: [
                             { value: 'visible', label: 'Visible' },
                             { value: 'hidden', label: 'Hidden' },
@@ -74,20 +77,24 @@ const SCHEMA = [
             },
         ],
     },
-    {
-        type: 'expandable',
-        name: '',
-        title: 'Pie Chart Options',
-        schema: [
-            { name: 'total', selector: { entity: {} } },
-            {
-                name: 'totalMultiplier',
-                selector: { number: { mode: 'box', step: 0.01 } },
-            },
-            { name: 'unknownName', selector: { text: {} } },
-        ],
-    },
 ];
+
+const PIE_OPTIONS_SCHEMA = {
+    type: 'expandable',
+    name: '',
+    title: 'Pie Chart Options',
+    schema: [
+        { name: 'total', selector: { entity: {} } },
+        {
+            type: 'grid',
+            name: '',
+            schema: [
+                { name: 'totalMultiplier', selector: { number: { mode: 'box', step: 0.01 } } },
+                { name: 'unknownName', selector: { text: {} } },
+            ],
+        },
+    ],
+};
 
 const LABELS: Record<string, string> = {
     title: 'Title',
@@ -141,6 +148,17 @@ export class HAAgChartsEditor extends LitElement {
         );
     }
 
+    private _hasPieSeries(): boolean {
+        return (this._config?.series || []).some(s => s.type === 'pie');
+    }
+
+    private _getSchema() {
+        if (this._hasPieSeries()) {
+            return [...BASE_SCHEMA, PIE_OPTIONS_SCHEMA];
+        }
+        return BASE_SCHEMA;
+    }
+
     protected render(): TemplateResult {
         if (!this.hass || !this._config) {
             return html``;
@@ -151,7 +169,7 @@ export class HAAgChartsEditor extends LitElement {
                 <ha-form
                     .hass=${this.hass}
                     .data=${this._config}
-                    .schema=${SCHEMA}
+                    .schema=${this._getSchema()}
                     .computeLabel=${this._computeLabel}
                     @value-changed=${this._valueChanged}
                 ></ha-form>
