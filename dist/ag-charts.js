@@ -108971,7 +108971,9 @@ function actionInfo(entity, element2) {
 
 // src/series.ts
 function buildSeriesConfig(context, hass) {
-  const { config: { series = [], legend, theme = "ag-default-dark", title, minHeight } = {} } = context;
+  const {
+    config: { series = [], legend, yAxis, theme = "ag-default-dark", title, minHeight } = {}
+  } = context;
   let optionalConfig = {};
   const cartesianSeries = series.filter((s3) => s3.type != "pie");
   const timeUnits = /* @__PURE__ */ new Set();
@@ -109004,8 +109006,9 @@ function buildSeriesConfig(context, hass) {
   if (cartesianSeries.length > 0) {
     optionalConfig.zoom = {};
     const axes = {};
+    const hideYAxis = yAxis === "hidden";
     for (const { key: key2, config } of axisConfigs) {
-      axes[key2] = config;
+      axes[key2] = hideYAxis ? { ...config, label: { enabled: false }, line: { enabled: false } } : config;
     }
     const timeUnit = timeUnits.values().next().value ?? "day";
     if (timeUnits.size > 1) {
@@ -109014,7 +109017,7 @@ function buildSeriesConfig(context, hass) {
     if (timeUnit === "ordinal") {
       axes.x = { type: "ordinal-time", position: "bottom" };
     } else {
-      axes.x = { type: "time", position: "bottom" };
+      axes.x = { type: "time", position: "bottom", nice: false };
     }
     optionalConfig.axes = axes;
   }
@@ -110221,7 +110224,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.2`,
+%cVersion: 0.2.0-beta.3`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

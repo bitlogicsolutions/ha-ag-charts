@@ -125,6 +125,12 @@ export const CONFIG_SCHEMA = {
         options: ['left', 'right', 'top', 'bottom', 'none'],
         description: 'The position of the legend',
     },
+    yAxis: {
+        type: 'select',
+        options: ['visible', 'hidden'],
+        description: 'Whether to show or hide the Y-axis',
+        default: 'visible',
+    },
     total: {
         type: 'string',
         description: 'The entity ID to use for the total value',

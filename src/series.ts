@@ -12,8 +12,9 @@ import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue
 import { performAction } from './actions';
 
 export function buildSeriesConfig(context: Context, hass: Hass) {
-    const { config: { series = [], legend, theme = 'ag-default-dark', title, minHeight } = {} } =
-        context;
+    const {
+        config: { series = [], legend, yAxis, theme = 'ag-default-dark', title, minHeight } = {},
+    } = context;
     let optionalConfig: Pick<
         AgCartesianChartOptions,
         'axes' | 'zoom' | 'legend' | 'minHeight' | 'title'
@@ -57,8 +58,11 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
         const axes: Record<string, any> = {};
 
         // Add y-axes
+        const hideYAxis = yAxis === 'hidden';
         for (const { key, config } of axisConfigs) {
-            axes[key] = config;
+            axes[key] = hideYAxis
+                ? { ...config, label: { enabled: false }, line: { enabled: false } }
+                : config;
         }
 
         // Add x-axis (time)
@@ -70,7 +74,8 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
             axes.x = { type: 'ordinal-time', position: 'bottom' };
         } else {
             // Let AG Charts auto-calculate tick intervals to avoid label overlap
-            axes.x = { type: 'time', position: 'bottom' };
+            // nice: false prevents padding the domain beyond the data range
+            axes.x = { type: 'time', position: 'bottom', nice: false };
         }
 
         optionalConfig.axes = axes;

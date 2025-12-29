@@ -10,6 +10,7 @@ export interface Config {
     interval?: '5minutes';
     period?: number;
     legend?: 'left' | 'right' | 'top' | 'bottom' | 'none';
+    yAxis?: 'visible' | 'hidden';
     total?: string;
     totalMultiplier?: number;
     unknownName?: string;
