@@ -109930,9 +109930,9 @@ var AgChartsEntityEditor = class extends r4 {
       (s3) => s3.name !== "path" || showPath
     );
     return x`
-            <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px; overflow: hidden;">
+            <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px;">
                 <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0 8px; background: var(--card-background-color);">
-                    <div style="flex: 1;">
+                    <div style="flex: 1; min-width: 0; overflow: hidden;">
                         <ha-form
                             .hass=${this.hass}
                             .data=${this.entity}
@@ -109942,11 +109942,13 @@ var AgChartsEntityEditor = class extends r4 {
                         ></ha-form>
                     </div>
                     <ha-icon-button
+                        style="flex-shrink: 0;"
                         .path=${MDI_PENCIL}
                         @click=${this._toggleAdvanced}
                         title="Edit options"
                     ></ha-icon-button>
                     <ha-icon-button
+                        style="flex-shrink: 0;"
                         .path=${MDI_DELETE}
                         @click=${this._remove}
                         title="Remove entity"
@@ -110449,7 +110451,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.6`,
+%cVersion: 0.2.0-beta.7`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

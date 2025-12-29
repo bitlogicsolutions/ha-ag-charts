@@ -114,9 +114,9 @@ export class AgChartsEntityEditor extends LitElement {
         );
 
         return html`
-            <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px; overflow: hidden;">
+            <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px;">
                 <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0 8px; background: var(--card-background-color);">
-                    <div style="flex: 1;">
+                    <div style="flex: 1; min-width: 0; overflow: hidden;">
                         <ha-form
                             .hass=${this.hass}
                             .data=${this.entity}
@@ -126,11 +126,13 @@ export class AgChartsEntityEditor extends LitElement {
                         ></ha-form>
                     </div>
                     <ha-icon-button
+                        style="flex-shrink: 0;"
                         .path=${MDI_PENCIL}
                         @click=${this._toggleAdvanced}
                         title="Edit options"
                     ></ha-icon-button>
                     <ha-icon-button
+                        style="flex-shrink: 0;"
                         .path=${MDI_DELETE}
                         @click=${this._remove}
                         title="Remove entity"
