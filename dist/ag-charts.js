@@ -109842,11 +109842,13 @@ function r6(r7) {
 // src/editor/entity-editor.ts
 var MDI_PENCIL = "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z";
 var MDI_DELETE = "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z";
+var ENTITY_SCHEMA = [{ name: "entity", selector: { entity: {} } }];
 var ADVANCED_SCHEMA = [
   { name: "name", selector: { text: {} } },
   {
     type: "grid",
     name: "",
+    column_min_width: "100px",
     schema: [
       { name: "fill", selector: { text: {} } },
       { name: "stroke", selector: { text: {} } }
@@ -109855,6 +109857,7 @@ var ADVANCED_SCHEMA = [
   {
     type: "grid",
     name: "",
+    column_min_width: "100px",
     schema: [
       { name: "yMultiplier", selector: { number: { mode: "box", step: 0.01 } } },
       { name: "yUnits", selector: { text: {} } }
@@ -109877,6 +109880,7 @@ var ADVANCED_SCHEMA = [
   { name: "path", selector: { text: {} } }
 ];
 var LABELS = {
+  entity: "Entity",
   name: "Display Name",
   fill: "Fill Color",
   stroke: "Stroke Color",
@@ -109894,12 +109898,7 @@ var AgChartsEntityEditor = class extends r4 {
       return LABELS[schema.name] || schema.name;
     };
   }
-  _entityChanged(ev) {
-    ev.stopPropagation();
-    const newEntity = { ...this.entity, entity: ev.detail.value };
-    this._fireChanged(newEntity);
-  }
-  _advancedChanged(ev) {
+  _valueChanged(ev) {
     ev.stopPropagation();
     const newEntity = { ...this.entity, ...ev.detail.value };
     this._fireChanged(newEntity);
@@ -109927,21 +109926,21 @@ var AgChartsEntityEditor = class extends r4 {
   }
   render() {
     const showPath = this.entity.action === "navigate";
-    const advancedData = { ...this.entity };
-    delete advancedData.entity;
-    const filteredSchema = ADVANCED_SCHEMA.filter(
+    const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(
       (s3) => s3.name !== "path" || showPath
     );
     return x`
             <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px; overflow: hidden;">
-                <div style="display: flex; align-items: center; gap: 4px; padding: 8px; background: var(--card-background-color);">
-                    <ha-entity-picker
-                        style="flex: 1;"
-                        .hass=${this.hass}
-                        .value=${this.entity.entity}
-                        @value-changed=${this._entityChanged}
-                        allow-custom-entity
-                    ></ha-entity-picker>
+                <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0 8px; background: var(--card-background-color);">
+                    <div style="flex: 1;">
+                        <ha-form
+                            .hass=${this.hass}
+                            .data=${this.entity}
+                            .schema=${ENTITY_SCHEMA}
+                            .computeLabel=${this._computeLabel}
+                            @value-changed=${this._valueChanged}
+                        ></ha-form>
+                    </div>
                     <ha-icon-button
                         .path=${MDI_PENCIL}
                         @click=${this._toggleAdvanced}
@@ -109957,10 +109956,10 @@ var AgChartsEntityEditor = class extends r4 {
                           <div style="padding: 12px; border-top: 1px solid var(--divider-color); background: var(--secondary-background-color);">
                               <ha-form
                                   .hass=${this.hass}
-                                  .data=${advancedData}
-                                  .schema=${filteredSchema}
+                                  .data=${this.entity}
+                                  .schema=${filteredAdvancedSchema}
                                   .computeLabel=${this._computeLabel}
-                                  @value-changed=${this._advancedChanged}
+                                  @value-changed=${this._valueChanged}
                               ></ha-form>
                           </div>
                       ` : ""}
@@ -110005,6 +110004,7 @@ var CARTESIAN_SCHEMA = [
   {
     type: "grid",
     name: "",
+    column_min_width: "100px",
     schema: [
       { name: "minY", selector: { number: { mode: "box" } } },
       { name: "maxY", selector: { number: { mode: "box" } } }
@@ -110024,6 +110024,7 @@ var PIE_SCHEMA = [
   {
     type: "grid",
     name: "",
+    column_min_width: "120px",
     schema: [
       {
         name: "calloutLabel",
@@ -110448,7 +110449,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.5`,
+%cVersion: 0.2.0-beta.6`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

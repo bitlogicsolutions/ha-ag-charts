@@ -12,11 +12,14 @@ declare global {
 const MDI_PENCIL = 'M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z';
 const MDI_DELETE = 'M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z';
 
+const ENTITY_SCHEMA = [{ name: 'entity', selector: { entity: {} } }];
+
 const ADVANCED_SCHEMA = [
     { name: 'name', selector: { text: {} } },
     {
         type: 'grid',
         name: '',
+        column_min_width: '100px',
         schema: [
             { name: 'fill', selector: { text: {} } },
             { name: 'stroke', selector: { text: {} } },
@@ -25,6 +28,7 @@ const ADVANCED_SCHEMA = [
     {
         type: 'grid',
         name: '',
+        column_min_width: '100px',
         schema: [
             { name: 'yMultiplier', selector: { number: { mode: 'box', step: 0.01 } } },
             { name: 'yUnits', selector: { text: {} } },
@@ -48,6 +52,7 @@ const ADVANCED_SCHEMA = [
 ];
 
 const LABELS: Record<string, string> = {
+    entity: 'Entity',
     name: 'Display Name',
     fill: 'Fill Color',
     stroke: 'Stroke Color',
@@ -70,13 +75,7 @@ export class AgChartsEntityEditor extends LitElement {
         return LABELS[schema.name] || schema.name;
     };
 
-    private _entityChanged(ev: CustomEvent): void {
-        ev.stopPropagation();
-        const newEntity = { ...this.entity, entity: ev.detail.value };
-        this._fireChanged(newEntity);
-    }
-
-    private _advancedChanged(ev: CustomEvent): void {
+    private _valueChanged(ev: CustomEvent): void {
         ev.stopPropagation();
         const newEntity = { ...this.entity, ...ev.detail.value };
         this._fireChanged(newEntity);
@@ -108,24 +107,24 @@ export class AgChartsEntityEditor extends LitElement {
 
     protected render(): TemplateResult {
         const showPath = this.entity.action === 'navigate';
-        const advancedData = { ...this.entity };
-        delete (advancedData as any).entity;
 
-        // Filter schema to show/hide path based on action
-        const filteredSchema = ADVANCED_SCHEMA.filter(
+        // Filter advanced schema to show/hide path based on action
+        const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(
             s => s.name !== 'path' || showPath
         );
 
         return html`
             <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px; overflow: hidden;">
-                <div style="display: flex; align-items: center; gap: 4px; padding: 8px; background: var(--card-background-color);">
-                    <ha-entity-picker
-                        style="flex: 1;"
-                        .hass=${this.hass}
-                        .value=${this.entity.entity}
-                        @value-changed=${this._entityChanged}
-                        allow-custom-entity
-                    ></ha-entity-picker>
+                <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0 8px; background: var(--card-background-color);">
+                    <div style="flex: 1;">
+                        <ha-form
+                            .hass=${this.hass}
+                            .data=${this.entity}
+                            .schema=${ENTITY_SCHEMA}
+                            .computeLabel=${this._computeLabel}
+                            @value-changed=${this._valueChanged}
+                        ></ha-form>
+                    </div>
                     <ha-icon-button
                         .path=${MDI_PENCIL}
                         @click=${this._toggleAdvanced}
@@ -142,10 +141,10 @@ export class AgChartsEntityEditor extends LitElement {
                           <div style="padding: 12px; border-top: 1px solid var(--divider-color); background: var(--secondary-background-color);">
                               <ha-form
                                   .hass=${this.hass}
-                                  .data=${advancedData}
-                                  .schema=${filteredSchema}
+                                  .data=${this.entity}
+                                  .schema=${filteredAdvancedSchema}
                                   .computeLabel=${this._computeLabel}
-                                  @value-changed=${this._advancedChanged}
+                                  @value-changed=${this._valueChanged}
                               ></ha-form>
                           </div>
                       `

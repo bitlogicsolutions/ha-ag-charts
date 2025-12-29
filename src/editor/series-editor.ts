@@ -32,6 +32,7 @@ const CARTESIAN_SCHEMA = [
     {
         type: 'grid',
         name: '',
+        column_min_width: '100px',
         schema: [
             { name: 'minY', selector: { number: { mode: 'box' } } },
             { name: 'maxY', selector: { number: { mode: 'box' } } },
@@ -52,6 +53,7 @@ const PIE_SCHEMA = [
     {
         type: 'grid',
         name: '',
+        column_min_width: '120px',
         schema: [
             {
                 name: 'calloutLabel',
