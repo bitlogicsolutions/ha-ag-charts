@@ -66,14 +66,11 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
         if (timeUnits.size > 1) {
             console.warn('AG Charts Card: Multiple time units not supported');
         }
-        if (timeUnit === 'continuous') {
-            axes.x = { type: 'time', position: 'bottom' };
-        } else if (timeUnit === 'ordinal') {
+        if (timeUnit === 'ordinal') {
             axes.x = { type: 'ordinal-time', position: 'bottom' };
-        } else if (timeUnit === 'week') {
-            axes.x = { type: 'time', position: 'bottom', interval: { step: 'week' } };
         } else {
-            axes.x = { type: 'time', position: 'bottom', interval: { step: timeUnit } };
+            // Let AG Charts auto-calculate tick intervals to avoid label overlap
+            axes.x = { type: 'time', position: 'bottom' };
         }
 
         optionalConfig.axes = axes;

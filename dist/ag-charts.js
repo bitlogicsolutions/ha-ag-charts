@@ -109011,14 +109011,10 @@ function buildSeriesConfig(context, hass) {
     if (timeUnits.size > 1) {
       console.warn("AG Charts Card: Multiple time units not supported");
     }
-    if (timeUnit === "continuous") {
-      axes.x = { type: "time", position: "bottom" };
-    } else if (timeUnit === "ordinal") {
+    if (timeUnit === "ordinal") {
       axes.x = { type: "ordinal-time", position: "bottom" };
-    } else if (timeUnit === "week") {
-      axes.x = { type: "time", position: "bottom", interval: { step: "week" } };
     } else {
-      axes.x = { type: "time", position: "bottom", interval: { step: timeUnit } };
+      axes.x = { type: "time", position: "bottom" };
     }
     optionalConfig.axes = axes;
   }
@@ -110225,7 +110221,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.1`,
+%cVersion: 0.2.0-beta.2`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
