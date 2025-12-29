@@ -6,7 +6,6 @@ import {
     AgChartThemeName,
     AgLineSeriesOptions,
     AgPieSeriesOptions,
-    time,
 } from 'ag-charts-enterprise';
 import { CartesianSeries, Context, Hass, PieSeries } from './types';
 import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue } from './utils';
@@ -20,55 +19,64 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
         'axes' | 'zoom' | 'legend' | 'minHeight' | 'title'
     > = {};
     const cartesianSeries = series.filter((s): s is CartesianSeries => s.type != 'pie');
-    const units = new Map();
     const timeUnits = new Set<NonNullable<CartesianSeries['timeUnit']>>();
+
+    // Build unit -> axis key mapping and collect axis configs
+    const unitToAxisKey = new Map<string, string>();
+    const axisConfigs: { key: string; config: any }[] = [];
+    let axisIndex = 0;
+
     for (const { entities = [], minY, maxY, timeUnit } of cartesianSeries) {
         timeUnits.add(timeUnit ?? 'continuous');
         for (const config of entities) {
             const entity = readEntityConfig(hass, config);
             const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
-            if (units.has(unit)) {
-                units.get(unit).push(key(entity));
-            } else {
-                units.set(unit, [key(entity)]);
+            if (!unitToAxisKey.has(unit)) {
+                const axisKey = axisIndex === 0 ? 'y' : `y${axisIndex + 1}`;
+                unitToAxisKey.set(unit, axisKey);
+                axisConfigs.push({
+                    key: axisKey,
+                    config: {
+                        type: 'number',
+                        position: 'left',
+                        min: typeof minY === 'number' ? minY : undefined,
+                        max: typeof maxY === 'number' ? maxY : undefined,
+                        nice: typeof minY !== 'number' && typeof maxY !== 'number',
+                        label: { format: `#{0>1.1f}${unit}` },
+                    },
+                });
+                axisIndex++;
             }
-        }
-
-        for (const [unit, keys] of units.entries()) {
-            optionalConfig.axes ??= [];
-            optionalConfig.axes.push({
-                type: 'number',
-                position: 'left',
-                min: typeof minY === 'number' ? minY : undefined,
-                max: typeof maxY === 'number' ? maxY : undefined,
-                nice: typeof minY !== 'number' && typeof maxY !== 'number',
-                keys,
-                label: { format: `#{0>1.1f}${unit}` },
-            });
         }
     }
 
     if (cartesianSeries.length > 0) {
         optionalConfig.zoom = {};
-        optionalConfig.axes ??= [];
 
-        const unit = timeUnits.values().next().value ?? 'day';
+        // Build axes dictionary
+        const axes: Record<string, any> = {};
+
+        // Add y-axes
+        for (const { key, config } of axisConfigs) {
+            axes[key] = config;
+        }
+
+        // Add x-axis (time)
+        const timeUnit = timeUnits.values().next().value ?? 'day';
         if (timeUnits.size > 1) {
             console.warn('AG Charts Card: Multiple time units not supported');
         }
-        if (unit === 'continuous') {
-            optionalConfig.axes.push({ type: 'time', position: 'bottom' });
-        } else if (unit === 'ordinal') {
-            optionalConfig.axes.push({ type: 'ordinal-time', position: 'bottom' });
-        } else if (unit === 'week') {
-            optionalConfig.axes.push({ type: 'time', position: 'bottom', unit: time.monday });
+        if (timeUnit === 'continuous') {
+            axes.x = { type: 'time', position: 'bottom' };
+        } else if (timeUnit === 'ordinal') {
+            axes.x = { type: 'ordinal-time', position: 'bottom' };
+        } else if (timeUnit === 'week') {
+            axes.x = { type: 'time', position: 'bottom', interval: { step: 'week' } };
         } else {
-            optionalConfig.axes?.push({
-                type: 'time',
-                position: 'bottom',
-                unit,
-            });
+            axes.x = { type: 'time', position: 'bottom', interval: { step: timeUnit } };
         }
+
+        optionalConfig.axes = axes;
     }
 
     if (legend === 'none') {
@@ -88,14 +96,18 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
     const options: AgChartOptions = {
         container: context.elements?.containerDiv,
         theme: generateTheme(theme),
-        series: generateSeriesOpts(context, hass) as any[],
+        series: generateSeriesOpts(context, hass, unitToAxisKey) as any[],
         minWidth: 0,
         ...optionalConfig,
     };
     return options;
 }
 
-function generateSeriesOpts(context: Context, hass: Hass) {
+function generateSeriesOpts(
+    context: Context,
+    hass: Hass,
+    unitToAxisKey: Map<string, string>
+) {
     const { series = [] } = context.config ?? {};
 
     const seriesOpts: (
@@ -114,9 +126,15 @@ function generateSeriesOpts(context: Context, hass: Hass) {
             case 'area':
                 for (const entityConfig of entities) {
                     const entity = readEntityConfig(hass, entityConfig);
+                    const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
+                    const axisKey = unitToAxisKey.get(unit);
                     const optional: any = {};
                     if (entity.fill) optional.fill = entity.fill;
                     if (entity.stroke) optional.stroke = entity.stroke;
+                    // Only specify yKeyAxis if there are multiple y-axes
+                    if (unitToAxisKey.size > 1 && axisKey) {
+                        optional.yKeyAxis = axisKey;
+                    }
                     seriesOpts.push({
                         type,
                         xKey: 'key',
@@ -124,7 +142,7 @@ function generateSeriesOpts(context: Context, hass: Hass) {
                         yName: entity.name,
                         stacked,
                         listeners: {
-                            nodeClick: () => performAction(entity, context.elements?.rootDiv!),
+                            seriesNodeClick: () => performAction(entity, context.elements?.rootDiv!),
                         },
                         ...optional,
                     } satisfies AgBarSeriesOptions | AgLineSeriesOptions | AgAreaSeriesOptions);
@@ -180,7 +198,7 @@ function generateSeriesOpts(context: Context, hass: Hass) {
                             formatPieTooltip(name, value, entity, config),
                     },
                     listeners: {
-                        nodeClick: ({ datum }) =>
+                        seriesNodeClick: ({ datum }) =>
                             performAction(datum.config, context.elements?.rootDiv!),
                     },
                 });

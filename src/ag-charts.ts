@@ -1,12 +1,32 @@
 import { AgChartInstance, AgCharts } from 'ag-charts-enterprise';
+import { ModuleRegistry } from 'ag-charts-community';
+import {
+    LineSeriesModule,
+    BarSeriesModule,
+    AreaSeriesModule,
+    PieSeriesModule,
+    NumberAxisModule,
+    TimeAxisModule,
+} from 'ag-charts-community';
+import { ZoomModule } from 'ag-charts-enterprise';
 import { Config, Hass, HassEntity } from './types';
 import { setupDOM } from './dom';
 import { buildSeriesConfig } from './series';
 import { updateData } from './data';
 import './ha-ag-charts-editor';
 
+ModuleRegistry.registerModules([
+    LineSeriesModule,
+    BarSeriesModule,
+    AreaSeriesModule,
+    PieSeriesModule,
+    NumberAxisModule,
+    TimeAxisModule,
+    ZoomModule,
+]);
+
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.1.1-alpha-2`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.2.0-beta.1`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
