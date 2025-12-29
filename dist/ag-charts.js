@@ -110385,6 +110385,33 @@ var HAAgChartsEditor = class extends r4 {
     const newConfig = { ...this._config, series: ev.detail.series };
     this._fireConfigChanged(newConfig);
   }
+  _entityChanged(ev) {
+    ev.stopPropagation();
+    if (!this._config)
+      return;
+    const { index, entity } = ev.detail;
+    const entities = [...this._config.entities || []];
+    entities[index] = entity;
+    this._fireConfigChanged({ ...this._config, entities });
+  }
+  _entityRemoved(ev) {
+    ev.stopPropagation();
+    if (!this._config)
+      return;
+    const { index } = ev.detail;
+    const entities = (this._config.entities || []).filter((_2, i5) => i5 !== index);
+    this._fireConfigChanged({ ...this._config, entities });
+  }
+  _addEntity() {
+    if (!this._config)
+      return;
+    const entities = [...this._config.entities || []];
+    entities.push({ entity: "" });
+    this._fireConfigChanged({ ...this._config, entities });
+  }
+  _normalizeEntity(entity) {
+    return typeof entity === "string" ? { entity } : entity;
+  }
   _fireConfigChanged(config) {
     this._config = config;
     this.dispatchEvent(
@@ -110408,6 +110435,8 @@ var HAAgChartsEditor = class extends r4 {
     if (!this.hass || !this._config) {
       return x``;
     }
+    const hasPie = this._hasPieSeries();
+    const pieEntities = this._config.entities || [];
     return x`
             <div style="padding: 16px;">
                 <ha-form
@@ -110417,6 +110446,31 @@ var HAAgChartsEditor = class extends r4 {
                     .computeLabel=${this._computeLabel}
                     @value-changed=${this._valueChanged}
                 ></ha-form>
+
+                ${hasPie ? x`
+                          <div style="margin-top: 16px; padding: 16px; border: 1px solid var(--divider-color); border-radius: 8px;">
+                              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                  <h3 style="margin: 0; font-size: 16px;">Pie Entities</h3>
+                                  <ha-button @click=${this._addEntity}>
+                                      Add Entity
+                                  </ha-button>
+                              </div>
+                              ${pieEntities.map(
+      (entity, i5) => x`
+                                      <ag-charts-entity-editor
+                                          .hass=${this.hass}
+                                          .entity=${this._normalizeEntity(entity)}
+                                          .index=${i5}
+                                          @entity-changed=${this._entityChanged}
+                                          @entity-removed=${this._entityRemoved}
+                                      ></ag-charts-entity-editor>
+                                  `
+    )}
+                              ${pieEntities.length === 0 ? x`<p style="color: var(--secondary-text-color); font-style: italic; margin: 8px 0;">
+                                        No entities configured. Click "Add Entity" to add pie slices.
+                                    </p>` : ""}
+                          </div>
+                      ` : ""}
 
                 <div style="margin-top: 24px;">
                     <ag-charts-series-list-editor
@@ -110451,7 +110505,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0-beta.7`,
+%cVersion: 0.2.0-beta.8`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

@@ -1,7 +1,8 @@
 import { LitElement, html, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { Config } from './types';
+import { Config, ConfigEntity, Entity } from './types';
 import './editor/series-list-editor';
+import './editor/entity-editor';
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -137,6 +138,37 @@ export class HAAgChartsEditor extends LitElement {
         this._fireConfigChanged(newConfig);
     }
 
+    private _entityChanged(ev: CustomEvent): void {
+        ev.stopPropagation();
+        if (!this._config) return;
+
+        const { index, entity } = ev.detail;
+        const entities: Entity[] = [...(this._config.entities || [])];
+        entities[index] = entity;
+        this._fireConfigChanged({ ...this._config, entities });
+    }
+
+    private _entityRemoved(ev: CustomEvent): void {
+        ev.stopPropagation();
+        if (!this._config) return;
+
+        const { index } = ev.detail;
+        const entities = (this._config.entities || []).filter((_, i) => i !== index);
+        this._fireConfigChanged({ ...this._config, entities });
+    }
+
+    private _addEntity(): void {
+        if (!this._config) return;
+
+        const entities: Entity[] = [...(this._config.entities || [])];
+        entities.push({ entity: '' });
+        this._fireConfigChanged({ ...this._config, entities });
+    }
+
+    private _normalizeEntity(entity: string | ConfigEntity): ConfigEntity {
+        return typeof entity === 'string' ? { entity } : entity;
+    }
+
     private _fireConfigChanged(config: Config): void {
         this._config = config;
         this.dispatchEvent(
@@ -164,6 +196,9 @@ export class HAAgChartsEditor extends LitElement {
             return html``;
         }
 
+        const hasPie = this._hasPieSeries();
+        const pieEntities = this._config.entities || [];
+
         return html`
             <div style="padding: 16px;">
                 <ha-form
@@ -173,6 +208,35 @@ export class HAAgChartsEditor extends LitElement {
                     .computeLabel=${this._computeLabel}
                     @value-changed=${this._valueChanged}
                 ></ha-form>
+
+                ${hasPie
+                    ? html`
+                          <div style="margin-top: 16px; padding: 16px; border: 1px solid var(--divider-color); border-radius: 8px;">
+                              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                  <h3 style="margin: 0; font-size: 16px;">Pie Entities</h3>
+                                  <ha-button @click=${this._addEntity}>
+                                      Add Entity
+                                  </ha-button>
+                              </div>
+                              ${pieEntities.map(
+                                  (entity, i) => html`
+                                      <ag-charts-entity-editor
+                                          .hass=${this.hass}
+                                          .entity=${this._normalizeEntity(entity)}
+                                          .index=${i}
+                                          @entity-changed=${this._entityChanged}
+                                          @entity-removed=${this._entityRemoved}
+                                      ></ag-charts-entity-editor>
+                                  `
+                              )}
+                              ${pieEntities.length === 0
+                                  ? html`<p style="color: var(--secondary-text-color); font-style: italic; margin: 8px 0;">
+                                        No entities configured. Click "Add Entity" to add pie slices.
+                                    </p>`
+                                  : ''}
+                          </div>
+                      `
+                    : ''}
 
                 <div style="margin-top: 24px;">
                     <ag-charts-series-list-editor
