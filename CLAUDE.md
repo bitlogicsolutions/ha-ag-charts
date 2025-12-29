@@ -61,3 +61,12 @@ Test sensors (temperature, humidity, pressure, power, energy) are configured in 
 **Supported Chart Types**: line, bar, area (with stacking), pie
 
 **Themes**: ag-default, ag-default-dark, ag-material, ag-material-dark, ag-vivid, ag-vivid-dark
+
+## Releasing
+
+1. Update version in `package.json` and `src/ag-charts.ts` (console.info banner)
+2. Run `yarn build` to rebuild dist/
+3. Commit changes and push to `latest` branch
+4. Create GitHub release: `gh release create vX.Y.Z --prerelease --title "vX.Y.Z" --notes "changelog"`
+   - Use `--prerelease` for beta versions
+   - Omit `--prerelease` for stable releases
