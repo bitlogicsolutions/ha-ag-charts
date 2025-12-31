@@ -66,9 +66,9 @@ async function fetchRecent(
             return undefined;
         }
 
-        // Forward-fill to regular intervals
+        // Forward-fill to regular intervals, aligned to interval boundaries
         const intervalMs = intervalToMs(interval);
-        const startMs = start.getTime();
+        const startMs = Math.floor(start.getTime() / intervalMs) * intervalMs; // Align to boundary
         const endMs = end.getTime();
         const dataPoints: DataPoint[] = [];
 

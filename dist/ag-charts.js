@@ -109184,7 +109184,7 @@ async function fetchRecent(hass, entityId, start2, end3, interval) {
       return void 0;
     }
     const intervalMs = intervalToMs(interval);
-    const startMs = start2.getTime();
+    const startMs = Math.floor(start2.getTime() / intervalMs) * intervalMs;
     const endMs = end3.getTime();
     const dataPoints = [];
     let historyIdx = 0;
@@ -110594,7 +110594,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.6`,
+%cVersion: 0.2.7`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
