@@ -109160,7 +109160,7 @@ async function fetchRecent(hass, entityId, start2, end3) {
     return void 0;
   }
   return result[0].filter((s3) => !isNaN(Number(s3.state))).map((s3) => ({
-    start: s3.last_changed,
+    start: new Date(s3.last_changed).getTime(),
     mean: Number(s3.state),
     state: Number(s3.state)
   }));
@@ -109184,7 +109184,11 @@ async function fetchEntityData(hass, entityId, start2, end3, interval, dataSourc
   }
   const stats = await fetchStatistics(hass, entityId, start2, end3, interval);
   if (stats && stats.length > 0) {
-    return stats;
+    return stats.map((s3) => ({
+      start: typeof s3.start === "string" ? new Date(s3.start).getTime() : s3.start,
+      mean: s3.mean,
+      state: s3.state
+    }));
   }
   if (dataSource === "auto") {
     return fetchRecent(hass, entityId, start2, end3);
@@ -110548,7 +110552,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.2`,
+%cVersion: 0.2.3`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

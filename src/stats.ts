@@ -1,8 +1,8 @@
 import { DataSource, Hass, HistoryState } from './types';
 
 export type Statistics = {
-    start: string;
-    end: string;
+    start: string | number;
+    end: string | number;
     min: number;
     mean: number;
     max: number;
@@ -10,7 +10,7 @@ export type Statistics = {
 };
 
 export type DataPoint = {
-    start: string;
+    start: number;
     mean: number;
     state: number;
 };
@@ -37,7 +37,7 @@ async function fetchRecent(
     return result[0]
         .filter(s => !isNaN(Number(s.state)))
         .map(s => ({
-            start: s.last_changed,
+            start: new Date(s.last_changed).getTime(),
             mean: Number(s.state),
             state: Number(s.state),
         }));
@@ -79,7 +79,12 @@ export async function fetchEntityData(
     // Try statistics first
     const stats = await fetchStatistics(hass, entityId, start, end, interval);
     if (stats && stats.length > 0) {
-        return stats;
+        // Convert statistics to DataPoint format (start may be string or number from HA)
+        return stats.map(s => ({
+            start: typeof s.start === 'string' ? new Date(s.start).getTime() : s.start,
+            mean: s.mean,
+            state: s.state,
+        }));
     }
 
     // Fallback to history if auto mode and no statistics available

@@ -58,14 +58,14 @@ export interface CartesianSeries {
 export type Series = PieSeries | CartesianSeries;
 
 export type Hass = {
-    callApi(arg0: string, url: string): unknown;
+    callApi(arg0: string, url: string): Promise<unknown>;
     callWS(opts: {
         type: string;
         start_time: string;
         end_time: string;
         statistic_ids: string[];
         period: string;
-    }): object;
+    }): Promise<object>;
     states: { [key: string]: HassEntity };
 };
 
