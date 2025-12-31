@@ -67,6 +67,10 @@ Test sensors (temperature, humidity, pressure, power, energy) are configured in 
 1. Update version in `package.json` and `src/ag-charts.ts` (console.info banner)
 2. Run `yarn build` to rebuild dist/
 3. Commit changes and push to `latest` branch
-4. Create GitHub release: `gh release create vX.Y.Z --prerelease --title "vX.Y.Z" --notes "changelog"`
-   - Use `--prerelease` for beta versions
-   - Omit `--prerelease` for stable releases
+4. Create GitHub release: `gh release create vX.Y.Z --title "vX.Y.Z" --notes "changelog"`
+
+**Version numbering:**
+- Stable releases: `X.Y.Z` (e.g., `0.3.0`)
+- Beta releases: `X.Y.Z-beta.N` (e.g., `0.3.0-beta.1`, `0.3.0-beta.2`)
+  - Use beta suffix when iterating on pre-release versions to avoid bumping patch version
+  - Add `--prerelease` flag to `gh release create` for beta versions
