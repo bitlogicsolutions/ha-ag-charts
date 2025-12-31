@@ -16,6 +16,8 @@ export interface Config {
     unknownName?: string;
 }
 
+export type DataSource = 'auto' | 'statistics' | 'history';
+
 export type ConfigEntity = {
     entity: string;
     name?: string;
@@ -26,6 +28,14 @@ export type ConfigEntity = {
     yUnits?: string;
     fill?: string;
     stroke?: string;
+    dataSource?: DataSource;
+};
+
+export type HistoryState = {
+    entity_id: string;
+    state: string;
+    last_changed: string;
+    attributes?: Record<string, unknown>;
 };
 
 export type Entity = string | ConfigEntity;

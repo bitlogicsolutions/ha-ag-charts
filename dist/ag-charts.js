@@ -109147,6 +109147,24 @@ function generateTheme(baseTheme) {
 }
 
 // src/stats.ts
+async function fetchRecent(hass, entityId, start2, end3) {
+  let url = "history/period";
+  if (start2)
+    url += `/${start2.toISOString()}`;
+  url += `?filter_entity_id=${entityId}`;
+  if (end3)
+    url += `&end_time=${end3.toISOString()}`;
+  url += "&skip_initial_state&significant_changes_only=0";
+  const result = await hass.callApi("GET", url);
+  if (!result || result.length === 0 || result[0].length === 0) {
+    return void 0;
+  }
+  return result[0].filter((s3) => !isNaN(Number(s3.state))).map((s3) => ({
+    start: s3.last_changed,
+    mean: Number(s3.state),
+    state: Number(s3.state)
+  }));
+}
 async function fetchStatistics(hass, entityId, start2, end3, period = "5minute") {
   const statistics = await hass.callWS({
     type: "recorder/statistics_during_period",
@@ -109157,6 +109175,19 @@ async function fetchStatistics(hass, entityId, start2, end3, period = "5minute")
   });
   if (statistics && entityId in statistics) {
     return statistics[entityId];
+  }
+  return void 0;
+}
+async function fetchEntityData(hass, entityId, start2, end3, interval, dataSource = "auto") {
+  if (dataSource === "history") {
+    return fetchRecent(hass, entityId, start2, end3);
+  }
+  const stats = await fetchStatistics(hass, entityId, start2, end3, interval);
+  if (stats && stats.length > 0) {
+    return stats;
+  }
+  if (dataSource === "auto") {
+    return fetchRecent(hass, entityId, start2, end3);
   }
   return void 0;
 }
@@ -109203,12 +109234,14 @@ async function updateData(context, hass) {
   for (const { entities: entities2 } of cartesianSeries ?? []) {
     for (const config of entities2 ?? []) {
       const entity = readEntityConfig(hass, config);
-      const stats = await fetchStatistics(
+      const entityConfig = typeof config === "object" ? config : void 0;
+      const stats = await fetchEntityData(
         hass,
         entity.entity,
         new Date(Date.now() - period * 24 * 36e5),
         /* @__PURE__ */ new Date(),
-        interval
+        interval,
+        entityConfig?.dataSource ?? "auto"
       );
       for (const { start: start2, mean, state } of stats ?? []) {
         let x2 = start2 + (entity.offsetXs ?? 0) * 1e3;
@@ -110515,7 +110548,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.1`,
+%cVersion: 0.2.2`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

@@ -1,5 +1,5 @@
-import { fetchStatistics } from './stats';
-import { CartesianSeries, Context, Hass } from './types';
+import { fetchEntityData } from './stats';
+import { CartesianSeries, ConfigEntity, Context, Hass } from './types';
 import { appendUnknownValue, key, readEntityConfig } from './utils';
 
 export async function updateData(context: Context, hass: Hass) {
@@ -47,12 +47,14 @@ export async function updateData(context: Context, hass: Hass) {
     for (const { entities } of cartesianSeries ?? []) {
         for (const config of entities ?? []) {
             const entity = readEntityConfig(hass, config);
-            const stats = await fetchStatistics(
+            const entityConfig = typeof config === 'object' ? (config as ConfigEntity) : undefined;
+            const stats = await fetchEntityData(
                 hass,
                 entity.entity,
                 new Date(Date.now() - period * 24 * 3600_000),
                 new Date(),
-                interval
+                interval,
+                entityConfig?.dataSource ?? 'auto'
             );
 
             for (const { start, mean, state } of stats ?? []) {
