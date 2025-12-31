@@ -7,6 +7,7 @@ import {
     PieSeriesModule,
     NumberAxisModule,
     TimeAxisModule,
+    LegendModule,
 } from 'ag-charts-community';
 import { ZoomModule } from 'ag-charts-enterprise';
 import { Config, Hass, HassEntity } from './types';
@@ -23,10 +24,11 @@ ModuleRegistry.registerModules([
     NumberAxisModule,
     TimeAxisModule,
     ZoomModule,
+    LegendModule,
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.2.5`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.2.6`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''

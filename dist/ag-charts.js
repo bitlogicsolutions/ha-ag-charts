@@ -110589,11 +110589,12 @@ moduleRegistry_exports.registerModules([
   PieSeriesModule,
   NumberAxisModule,
   TimeAxisModule,
-  ZoomModule
+  ZoomModule,
+  LegendModule
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.5`,
+%cVersion: 0.2.6`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
