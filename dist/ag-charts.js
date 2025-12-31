@@ -110515,7 +110515,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.0`,
+%cVersion: 0.2.1`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
@@ -110564,8 +110564,11 @@ var HAAgCharts = class extends HTMLElement {
     this.updateData(hass);
   }
   async updateData(hass) {
+    const data = await updateData(this, hass);
+    if (!data)
+      return;
     await this.chartInstance?.updateDelta({
-      data: await updateData(this, hass)
+      data
     });
   }
   getCardSize() {

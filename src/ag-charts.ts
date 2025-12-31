@@ -26,7 +26,7 @@ ModuleRegistry.registerModules([
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.2.0`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.2.1`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
@@ -88,8 +88,11 @@ class HAAgCharts extends HTMLElement {
     }
 
     async updateData(hass: Hass) {
+        const data = await updateData(this, hass);
+        if (!data) return;
+
         await this.chartInstance?.updateDelta({
-            data: await updateData(this, hass),
+            data,
         });
     }
 
