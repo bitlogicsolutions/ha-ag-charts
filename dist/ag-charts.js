@@ -109148,63 +109148,63 @@ function generateTheme(baseTheme) {
 
 // src/stats.ts
 function intervalToMs(interval) {
-  const match = interval.match(/^(\d+)?(\w+)$/);
-  if (!match)
-    return 3e5;
-  const count = match[1] ? parseInt(match[1]) : 1;
-  const unit = match[2];
-  switch (unit) {
-    case "minute":
-      return count * 6e4;
+  switch (interval) {
+    case "5minute":
+      return 3e5;
     case "hour":
-      return count * 36e5;
+      return 36e5;
     case "day":
-      return count * 864e5;
+      return 864e5;
     case "week":
-      return count * 6048e5;
+      return 6048e5;
     case "month":
-      return count * 2592e6;
+      return 2592e6;
     default:
       return 3e5;
   }
 }
 async function fetchRecent(hass, entityId, start2, end3, interval) {
-  let url = "history/period";
-  if (start2)
-    url += `/${start2.toISOString()}`;
-  url += `?filter_entity_id=${entityId}`;
-  if (end3)
-    url += `&end_time=${end3.toISOString()}`;
-  url += "&significant_changes_only=0";
-  const result = await hass.callApi("GET", url);
-  if (!result || result.length === 0 || result[0].length === 0) {
-    return void 0;
-  }
-  const historyPoints = result[0].filter((s3) => !isNaN(Number(s3.state))).map((s3) => ({
-    time: new Date(s3.last_changed).getTime(),
-    value: Number(s3.state)
-  })).sort((a3, b3) => a3.time - b3.time);
-  if (historyPoints.length === 0) {
-    return void 0;
-  }
-  const intervalMs = intervalToMs(interval);
-  const startMs = start2.getTime();
-  const endMs = end3.getTime();
-  const dataPoints = [];
-  let historyIdx = 0;
-  let currentValue = historyPoints[0].value;
-  for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
-    while (historyIdx < historyPoints.length && historyPoints[historyIdx].time <= bucketTime) {
-      currentValue = historyPoints[historyIdx].value;
-      historyIdx++;
+  try {
+    let url = "history/period";
+    if (start2)
+      url += `/${start2.toISOString()}`;
+    url += `?filter_entity_id=${entityId}`;
+    if (end3)
+      url += `&end_time=${end3.toISOString()}`;
+    url += "&significant_changes_only=0";
+    const result = await hass.callApi("GET", url);
+    if (!result || result.length === 0 || result[0].length === 0) {
+      return void 0;
     }
-    dataPoints.push({
-      start: bucketTime,
-      mean: currentValue,
-      state: currentValue
-    });
+    const historyPoints = result[0].filter((s3) => s3.state != null && !isNaN(Number(s3.state))).map((s3) => ({
+      time: new Date(s3.last_changed).getTime(),
+      value: Number(s3.state)
+    })).sort((a3, b3) => a3.time - b3.time);
+    if (historyPoints.length === 0) {
+      return void 0;
+    }
+    const intervalMs = intervalToMs(interval);
+    const startMs = start2.getTime();
+    const endMs = end3.getTime();
+    const dataPoints = [];
+    let historyIdx = 0;
+    let currentValue = historyPoints[0].value;
+    for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
+      while (historyIdx < historyPoints.length && historyPoints[historyIdx].time <= bucketTime) {
+        currentValue = historyPoints[historyIdx].value;
+        historyIdx++;
+      }
+      dataPoints.push({
+        start: bucketTime,
+        mean: currentValue,
+        state: currentValue
+      });
+    }
+    return dataPoints.length > 0 ? dataPoints : void 0;
+  } catch (e5) {
+    console.error("[ha-ag-charts] Error fetching history:", e5);
+    return void 0;
   }
-  return dataPoints;
 }
 async function fetchStatistics(hass, entityId, start2, end3, period = "5minute") {
   const statistics = await hass.callWS({
@@ -110593,7 +110593,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.2.4`,
+%cVersion: 0.2.5`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

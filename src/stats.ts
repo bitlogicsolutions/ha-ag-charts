@@ -16,21 +16,18 @@ export type DataPoint = {
 };
 
 function intervalToMs(interval: string): number {
-    const match = interval.match(/^(\d+)?(\w+)$/);
-    if (!match) return 300_000; // Default 5 minutes
-    const count = match[1] ? parseInt(match[1]) : 1;
-    const unit = match[2];
-    switch (unit) {
-        case 'minute':
-            return count * 60_000;
+    // Handle HA statistics periods: '5minute', 'hour', 'day', 'week', 'month'
+    switch (interval) {
+        case '5minute':
+            return 300_000;
         case 'hour':
-            return count * 3600_000;
+            return 3600_000;
         case 'day':
-            return count * 86400_000;
+            return 86400_000;
         case 'week':
-            return count * 604800_000;
+            return 604800_000;
         case 'month':
-            return count * 2592000_000; // 30 days
+            return 2592000_000; // 30 days
         default:
             return 300_000; // Default 5 minutes
     }
@@ -43,58 +40,63 @@ async function fetchRecent(
     end: Date,
     interval: string
 ): Promise<DataPoint[] | undefined> {
-    let url = 'history/period';
-    if (start) url += `/${start.toISOString()}`;
-    url += `?filter_entity_id=${entityId}`;
-    if (end) url += `&end_time=${end.toISOString()}`;
-    url += '&significant_changes_only=0'; // Include initial state
+    try {
+        let url = 'history/period';
+        if (start) url += `/${start.toISOString()}`;
+        url += `?filter_entity_id=${entityId}`;
+        if (end) url += `&end_time=${end.toISOString()}`;
+        url += '&significant_changes_only=0'; // Include initial state
 
-    const result = (await hass.callApi('GET', url)) as HistoryState[][];
+        const result = (await hass.callApi('GET', url)) as HistoryState[][];
 
-    if (!result || result.length === 0 || result[0].length === 0) {
-        return undefined;
-    }
-
-    // Parse history states and filter numeric values
-    const historyPoints = result[0]
-        .filter(s => !isNaN(Number(s.state)))
-        .map(s => ({
-            time: new Date(s.last_changed).getTime(),
-            value: Number(s.state),
-        }))
-        .sort((a, b) => a.time - b.time);
-
-    if (historyPoints.length === 0) {
-        return undefined;
-    }
-
-    // Forward-fill to regular intervals
-    const intervalMs = intervalToMs(interval);
-    const startMs = start.getTime();
-    const endMs = end.getTime();
-    const dataPoints: DataPoint[] = [];
-
-    let historyIdx = 0;
-    let currentValue = historyPoints[0].value;
-
-    for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
-        // Advance to the latest history point at or before this bucket
-        while (
-            historyIdx < historyPoints.length &&
-            historyPoints[historyIdx].time <= bucketTime
-        ) {
-            currentValue = historyPoints[historyIdx].value;
-            historyIdx++;
+        if (!result || result.length === 0 || result[0].length === 0) {
+            return undefined;
         }
 
-        dataPoints.push({
-            start: bucketTime,
-            mean: currentValue,
-            state: currentValue,
-        });
-    }
+        // Parse history states and filter numeric values
+        const historyPoints = result[0]
+            .filter(s => s.state != null && !isNaN(Number(s.state)))
+            .map(s => ({
+                time: new Date(s.last_changed).getTime(),
+                value: Number(s.state),
+            }))
+            .sort((a, b) => a.time - b.time);
 
-    return dataPoints;
+        if (historyPoints.length === 0) {
+            return undefined;
+        }
+
+        // Forward-fill to regular intervals
+        const intervalMs = intervalToMs(interval);
+        const startMs = start.getTime();
+        const endMs = end.getTime();
+        const dataPoints: DataPoint[] = [];
+
+        let historyIdx = 0;
+        let currentValue = historyPoints[0].value;
+
+        for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
+            // Advance to the latest history point at or before this bucket
+            while (
+                historyIdx < historyPoints.length &&
+                historyPoints[historyIdx].time <= bucketTime
+            ) {
+                currentValue = historyPoints[historyIdx].value;
+                historyIdx++;
+            }
+
+            dataPoints.push({
+                start: bucketTime,
+                mean: currentValue,
+                state: currentValue,
+            });
+        }
+
+        return dataPoints.length > 0 ? dataPoints : undefined;
+    } catch (e) {
+        console.error('[ha-ag-charts] Error fetching history:', e);
+        return undefined;
+    }
 }
 
 export async function fetchStatistics(
