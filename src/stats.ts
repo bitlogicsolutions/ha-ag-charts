@@ -119,6 +119,30 @@ export async function fetchStatistics(
     return undefined;
 }
 
+export function fetchAttributeData(
+    hass: Hass,
+    entityId: string,
+    attribute: string,
+    valueField: string,
+    timestampField: string = 'start'
+): DataPoint[] | undefined {
+    const items = hass.states[entityId]?.attributes?.[attribute];
+    if (!Array.isArray(items) || items.length === 0) {
+        return undefined;
+    }
+
+    const dataPoints: DataPoint[] = [];
+    for (const item of items) {
+        const start = new Date(item[timestampField]).getTime();
+        const value = Number(item[valueField]);
+        if (isNaN(start) || isNaN(value)) continue;
+        dataPoints.push({ start, mean: value, state: value });
+    }
+
+    dataPoints.sort((a, b) => a.start - b.start);
+    return dataPoints.length > 0 ? dataPoints : undefined;
+}
+
 export async function fetchEntityData(
     hass: Hass,
     entityId: string,

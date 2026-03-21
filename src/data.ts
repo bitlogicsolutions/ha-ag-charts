@@ -1,4 +1,4 @@
-import { fetchEntityData } from './stats';
+import { fetchAttributeData, fetchEntityData } from './stats';
 import { CartesianSeries, ConfigEntity, Context, Hass } from './types';
 import { appendUnknownValue, key, readEntityConfig } from './utils';
 
@@ -48,14 +48,25 @@ export async function updateData(context: Context, hass: Hass) {
         for (const config of entities ?? []) {
             const entity = readEntityConfig(hass, config);
             const entityConfig = typeof config === 'object' ? (config as ConfigEntity) : undefined;
-            const stats = await fetchEntityData(
-                hass,
-                entity.entity,
-                new Date(Date.now() - period * 24 * 3600_000),
-                new Date(),
-                interval,
-                entityConfig?.dataSource ?? 'auto'
-            );
+            let stats;
+            if (entityConfig?.dataSource === 'attribute') {
+                stats = fetchAttributeData(
+                    hass,
+                    entity.entity,
+                    entityConfig.attribute ?? 'rates',
+                    entityConfig.attributeField ?? 'value_inc_vat',
+                    entityConfig.attributeTimestampField ?? 'start'
+                );
+            } else {
+                stats = await fetchEntityData(
+                    hass,
+                    entity.entity,
+                    new Date(Date.now() - period * 24 * 3600_000),
+                    new Date(),
+                    interval,
+                    entityConfig?.dataSource ?? 'auto'
+                );
+            }
 
             for (const { start, mean, state } of stats ?? []) {
                 let x = start + (entity.offsetXs ?? 0) * 1_000;

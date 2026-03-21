@@ -16,7 +16,7 @@ export interface Config {
     unknownName?: string;
 }
 
-export type DataSource = 'auto' | 'statistics' | 'history';
+export type DataSource = 'auto' | 'statistics' | 'history' | 'attribute';
 
 export type ConfigEntity = {
     entity: string;
@@ -29,6 +29,9 @@ export type ConfigEntity = {
     fill?: string;
     stroke?: string;
     dataSource?: DataSource;
+    attribute?: string;
+    attributeField?: string;
+    attributeTimestampField?: string;
 };
 
 export type HistoryState = {
@@ -75,6 +78,7 @@ export type HassEntity = {
     attributes?: {
         friendly_name?: string;
         unit_of_measurement?: string;
+        [key: string]: unknown;
     };
 };
 

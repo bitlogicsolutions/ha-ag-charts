@@ -78,6 +78,25 @@ export const CONFIG_SCHEMA = {
                                 type: 'string',
                                 description: 'Custom stroke color for the series',
                             },
+                            dataSource: {
+                                type: 'select',
+                                options: ['auto', 'statistics', 'history', 'attribute'],
+                                description: 'The data source type',
+                            },
+                            attribute: {
+                                type: 'string',
+                                description:
+                                    'Attribute name containing data array (for attribute data source)',
+                            },
+                            attributeField: {
+                                type: 'string',
+                                description: 'Field name for Y values within each array item',
+                            },
+                            attributeTimestampField: {
+                                type: 'string',
+                                description:
+                                    'Field name for timestamp within each array item (default: start)',
+                            },
                         },
                     },
                 },

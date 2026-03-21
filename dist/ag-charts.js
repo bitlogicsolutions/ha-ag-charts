@@ -109219,6 +109219,22 @@ async function fetchStatistics(hass, entityId, start2, end3, period = "5minute")
   }
   return void 0;
 }
+function fetchAttributeData(hass, entityId, attribute, valueField, timestampField = "start") {
+  const items = hass.states[entityId]?.attributes?.[attribute];
+  if (!Array.isArray(items) || items.length === 0) {
+    return void 0;
+  }
+  const dataPoints = [];
+  for (const item of items) {
+    const start2 = new Date(item[timestampField]).getTime();
+    const value = Number(item[valueField]);
+    if (isNaN(start2) || isNaN(value))
+      continue;
+    dataPoints.push({ start: start2, mean: value, state: value });
+  }
+  dataPoints.sort((a3, b3) => a3.start - b3.start);
+  return dataPoints.length > 0 ? dataPoints : void 0;
+}
 async function fetchEntityData(hass, entityId, start2, end3, interval, dataSource = "auto") {
   if (dataSource === "history") {
     return fetchRecent(hass, entityId, start2, end3, interval);
@@ -109280,14 +109296,25 @@ async function updateData(context, hass) {
     for (const config of entities2 ?? []) {
       const entity = readEntityConfig(hass, config);
       const entityConfig = typeof config === "object" ? config : void 0;
-      const stats = await fetchEntityData(
-        hass,
-        entity.entity,
-        new Date(Date.now() - period * 24 * 36e5),
-        /* @__PURE__ */ new Date(),
-        interval,
-        entityConfig?.dataSource ?? "auto"
-      );
+      let stats;
+      if (entityConfig?.dataSource === "attribute") {
+        stats = fetchAttributeData(
+          hass,
+          entity.entity,
+          entityConfig.attribute ?? "rates",
+          entityConfig.attributeField ?? "value_inc_vat",
+          entityConfig.attributeTimestampField ?? "start"
+        );
+      } else {
+        stats = await fetchEntityData(
+          hass,
+          entity.entity,
+          new Date(Date.now() - period * 24 * 36e5),
+          /* @__PURE__ */ new Date(),
+          interval,
+          entityConfig?.dataSource ?? "auto"
+        );
+      }
       for (const { start: start2, mean, state } of stats ?? []) {
         let x2 = start2 + (entity.offsetXs ?? 0) * 1e3;
         let dataEntry = dataMap.get(x2);
@@ -109943,6 +109970,23 @@ var ADVANCED_SCHEMA = [
   },
   { name: "offsetXs", selector: { number: { mode: "box" } } },
   {
+    name: "dataSource",
+    selector: {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "", label: "Auto" },
+          { value: "statistics", label: "Statistics" },
+          { value: "history", label: "History" },
+          { value: "attribute", label: "Attribute" }
+        ]
+      }
+    }
+  },
+  { name: "attribute", selector: { text: {} } },
+  { name: "attributeField", selector: { text: {} } },
+  { name: "attributeTimestampField", selector: { text: {} } },
+  {
     name: "action",
     selector: {
       select: {
@@ -109965,6 +110009,10 @@ var LABELS = {
   yMultiplier: "Y Multiplier",
   yUnits: "Y Units",
   offsetXs: "X Offset (seconds)",
+  dataSource: "Data Source",
+  attribute: "Attribute Name",
+  attributeField: "Value Field",
+  attributeTimestampField: "Timestamp Field",
   action: "Click Action",
   path: "Navigation Path"
 };
@@ -110004,9 +110052,15 @@ var AgChartsEntityEditor = class extends r4 {
   }
   render() {
     const showPath = this.entity.action === "navigate";
-    const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(
-      (s3) => s3.name !== "path" || showPath
-    );
+    const showAttribute = this.entity.dataSource === "attribute";
+    const attributeFields = ["attribute", "attributeField", "attributeTimestampField"];
+    const filteredAdvancedSchema = ADVANCED_SCHEMA.filter((s3) => {
+      if (s3.name === "path")
+        return showPath;
+      if (attributeFields.includes(s3.name))
+        return showAttribute;
+      return true;
+    });
     return x`
             <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px;">
                 <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0 8px; background: var(--card-background-color);">

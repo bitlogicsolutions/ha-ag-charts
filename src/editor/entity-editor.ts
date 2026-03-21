@@ -36,6 +36,23 @@ const ADVANCED_SCHEMA = [
     },
     { name: 'offsetXs', selector: { number: { mode: 'box' } } },
     {
+        name: 'dataSource',
+        selector: {
+            select: {
+                mode: 'dropdown',
+                options: [
+                    { value: '', label: 'Auto' },
+                    { value: 'statistics', label: 'Statistics' },
+                    { value: 'history', label: 'History' },
+                    { value: 'attribute', label: 'Attribute' },
+                ],
+            },
+        },
+    },
+    { name: 'attribute', selector: { text: {} } },
+    { name: 'attributeField', selector: { text: {} } },
+    { name: 'attributeTimestampField', selector: { text: {} } },
+    {
         name: 'action',
         selector: {
             select: {
@@ -59,6 +76,10 @@ const LABELS: Record<string, string> = {
     yMultiplier: 'Y Multiplier',
     yUnits: 'Y Units',
     offsetXs: 'X Offset (seconds)',
+    dataSource: 'Data Source',
+    attribute: 'Attribute Name',
+    attributeField: 'Value Field',
+    attributeTimestampField: 'Timestamp Field',
     action: 'Click Action',
     path: 'Navigation Path',
 };
@@ -107,11 +128,15 @@ export class AgChartsEntityEditor extends LitElement {
 
     protected render(): TemplateResult {
         const showPath = this.entity.action === 'navigate';
+        const showAttribute = this.entity.dataSource === 'attribute';
+        const attributeFields = ['attribute', 'attributeField', 'attributeTimestampField'];
 
-        // Filter advanced schema to show/hide path based on action
-        const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(
-            s => s.name !== 'path' || showPath
-        );
+        // Filter advanced schema to show/hide conditional fields
+        const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(s => {
+            if (s.name === 'path') return showPath;
+            if (attributeFields.includes(s.name)) return showAttribute;
+            return true;
+        });
 
         return html`
             <div style="display: block; margin-bottom: 8px; border: 1px solid var(--divider-color); border-radius: 8px;">
