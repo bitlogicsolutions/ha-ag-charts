@@ -97,7 +97,7 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
 
     const options: AgChartOptions = {
         container: context.elements?.containerDiv,
-        theme: generateTheme(theme),
+        theme: generateTheme(theme, context.config?.tooltip ?? 'shared'),
         series: generateSeriesOpts(context, hass, unitToAxisKey) as any[],
         minWidth: 0,
         ...optionalConfig,
@@ -211,14 +211,14 @@ function generateSeriesOpts(
     return seriesOpts;
 }
 
-function generateTheme(baseTheme: AgChartThemeName) {
+function generateTheme(baseTheme: AgChartThemeName, tooltipMode: 'shared' | 'exact' = 'shared') {
     return {
         baseTheme,
         overrides: {
             common: {
                 animation: { enabled: false },
                 background: { visible: false },
-                tooltip: { mode: 'shared' as const },
+                tooltip: { mode: tooltipMode as const },
                 zoom: { buttons: { visible: 'zoomed' as const } },
             },
             line: { series: { marker: { enabled: false } } },

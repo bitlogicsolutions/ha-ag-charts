@@ -63,8 +63,9 @@ export async function updateData(context: Context, hass: Hass) {
                     entity.entity,
                     new Date(Date.now() - period * 24 * 3600_000),
                     new Date(),
-                    interval,
-                    entityConfig?.dataSource ?? 'auto'
+                    entityConfig?.interval || interval,
+                    entityConfig?.dataSource ?? 'auto',
+                    entityConfig?.aggregation || 'mean'
                 );
             }
 

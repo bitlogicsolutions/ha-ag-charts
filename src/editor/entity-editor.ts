@@ -49,6 +49,40 @@ const ADVANCED_SCHEMA = [
             },
         },
     },
+    {
+        type: 'grid',
+        name: '',
+        column_min_width: '100px',
+        schema: [
+            {
+                name: 'interval',
+                selector: {
+                    select: {
+                        mode: 'dropdown',
+                        options: [
+                            { value: '', label: 'Default' },
+                            { value: '5minute', label: '5 Minutes' },
+                            { value: '30minute', label: '30 Minutes' },
+                            { value: 'hour', label: 'Hour' },
+                            { value: 'day', label: 'Day' },
+                        ],
+                    },
+                },
+            },
+            {
+                name: 'aggregation',
+                selector: {
+                    select: {
+                        mode: 'dropdown',
+                        options: [
+                            { value: '', label: 'Mean (default)' },
+                            { value: 'sum', label: 'Sum' },
+                        ],
+                    },
+                },
+            },
+        ],
+    },
     { name: 'attribute', selector: { text: {} } },
     { name: 'attributeField', selector: { text: {} } },
     { name: 'attributeTimestampField', selector: { text: {} } },
@@ -77,6 +111,8 @@ const LABELS: Record<string, string> = {
     yUnits: 'Y Units',
     offsetXs: 'X Offset (seconds)',
     dataSource: 'Data Source',
+    interval: 'Interval',
+    aggregation: 'Aggregation',
     attribute: 'Attribute Name',
     attributeField: 'Value Field',
     attributeTimestampField: 'Timestamp Field',
@@ -130,11 +166,17 @@ export class AgChartsEntityEditor extends LitElement {
         const showPath = this.entity.action === 'navigate';
         const showAttribute = this.entity.dataSource === 'attribute';
         const attributeFields = ['attribute', 'attributeField', 'attributeTimestampField'];
+        const historyOnlyFields = ['interval', 'aggregation'];
 
         // Filter advanced schema to show/hide conditional fields
         const filteredAdvancedSchema = ADVANCED_SCHEMA.filter(s => {
             if (s.name === 'path') return showPath;
             if (attributeFields.includes(s.name)) return showAttribute;
+            // Hide interval/aggregation grid when dataSource is attribute
+            if ('schema' in s && Array.isArray((s as any).schema)) {
+                const childNames = (s as any).schema.map((c: any) => c.name);
+                if (childNames.some((n: string) => historyOnlyFields.includes(n))) return !showAttribute;
+            }
             return true;
         });
 

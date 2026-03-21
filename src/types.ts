@@ -11,6 +11,7 @@ export interface Config {
     period?: number;
     legend?: 'left' | 'right' | 'top' | 'bottom' | 'none';
     yAxis?: 'visible' | 'hidden';
+    tooltip?: 'shared' | 'exact';
     total?: string;
     totalMultiplier?: number;
     unknownName?: string;
@@ -29,6 +30,8 @@ export type ConfigEntity = {
     fill?: string;
     stroke?: string;
     dataSource?: DataSource;
+    interval?: '5minute' | '30minute' | 'hour' | 'day';
+    aggregation?: 'mean' | 'sum';
     attribute?: string;
     attributeField?: string;
     attributeTimestampField?: string;

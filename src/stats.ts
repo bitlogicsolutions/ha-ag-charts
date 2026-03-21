@@ -20,6 +20,8 @@ function intervalToMs(interval: string): number {
     switch (interval) {
         case '5minute':
             return 300_000;
+        case '30minute':
+            return 1_800_000;
         case 'hour':
             return 3600_000;
         case 'day':
@@ -38,7 +40,8 @@ async function fetchRecent(
     entityId: string,
     start: Date,
     end: Date,
-    interval: string
+    interval: string,
+    aggregation: 'mean' | 'sum' = 'mean'
 ): Promise<DataPoint[] | undefined> {
     try {
         let url = 'history/period';
@@ -66,30 +69,39 @@ async function fetchRecent(
             return undefined;
         }
 
-        // Forward-fill to regular intervals, aligned to interval boundaries
+        // Bucket history points into regular intervals
         const intervalMs = intervalToMs(interval);
-        const startMs = Math.floor(start.getTime() / intervalMs) * intervalMs; // Align to boundary
+        const startMs = Math.floor(start.getTime() / intervalMs) * intervalMs;
         const endMs = end.getTime();
         const dataPoints: DataPoint[] = [];
 
-        let historyIdx = 0;
-        let currentValue = historyPoints[0].value;
+        // Collect values per bucket
+        const buckets = new Map<number, number[]>();
+        for (let t = startMs; t <= endMs; t += intervalMs) {
+            buckets.set(t, []);
+        }
 
-        for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
-            // Advance to the latest history point at or before this bucket
-            while (
-                historyIdx < historyPoints.length &&
-                historyPoints[historyIdx].time <= bucketTime
-            ) {
-                currentValue = historyPoints[historyIdx].value;
-                historyIdx++;
+        for (const { time, value } of historyPoints) {
+            const bucketTime = Math.floor(time / intervalMs) * intervalMs;
+            buckets.get(bucketTime)?.push(value);
+        }
+
+        let lastValue = historyPoints[0].value;
+        for (const [bucketTime, values] of buckets) {
+            let value: number;
+            if (aggregation === 'sum') {
+                value = values.length > 0 ? values.reduce((a, b) => a + b, 0) : 0;
+            } else {
+                // Mean with forward-fill for empty buckets
+                if (values.length > 0) {
+                    value = values.reduce((a, b) => a + b, 0) / values.length;
+                    lastValue = value;
+                } else {
+                    value = lastValue;
+                }
             }
 
-            dataPoints.push({
-                start: bucketTime,
-                mean: currentValue,
-                state: currentValue,
-            });
+            dataPoints.push({ start: bucketTime, mean: value, state: value });
         }
 
         return dataPoints.length > 0 ? dataPoints : undefined;
@@ -149,11 +161,12 @@ export async function fetchEntityData(
     start: Date,
     end: Date,
     interval: string,
-    dataSource: DataSource = 'auto'
+    dataSource: DataSource = 'auto',
+    aggregation: 'mean' | 'sum' = 'mean'
 ): Promise<DataPoint[] | undefined> {
     // If explicitly set to history, skip statistics
     if (dataSource === 'history') {
-        return fetchRecent(hass, entityId, start, end, interval);
+        return fetchRecent(hass, entityId, start, end, interval, aggregation);
     }
 
     // Try statistics first
@@ -169,7 +182,7 @@ export async function fetchEntityData(
 
     // Fallback to history if auto mode and no statistics available
     if (dataSource === 'auto') {
-        return fetchRecent(hass, entityId, start, end, interval);
+        return fetchRecent(hass, entityId, start, end, interval, aggregation);
     }
 
     return undefined;

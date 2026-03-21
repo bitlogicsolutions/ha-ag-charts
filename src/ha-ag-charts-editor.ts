@@ -76,6 +76,18 @@ const BASE_SCHEMA = [
                     },
                 },
             },
+            {
+                name: 'tooltip',
+                selector: {
+                    select: {
+                        mode: 'dropdown',
+                        options: [
+                            { value: '', label: 'Shared (default)' },
+                            { value: 'exact', label: 'Single Series' },
+                        ],
+                    },
+                },
+            },
         ],
     },
 ];
@@ -104,6 +116,7 @@ const LABELS: Record<string, string> = {
     refresh: 'Refresh Interval',
     legend: 'Legend Position',
     yAxis: 'Y-Axis',
+    tooltip: 'Tooltip Mode',
     total: 'Total Entity',
     totalMultiplier: 'Total Multiplier',
     unknownName: 'Unknown Value Name',

@@ -109034,7 +109034,7 @@ function buildSeriesConfig(context, hass) {
   }
   const options = {
     container: context.elements?.containerDiv,
-    theme: generateTheme(theme),
+    theme: generateTheme(theme, context.config?.tooltip ?? "shared"),
     series: generateSeriesOpts(context, hass, unitToAxisKey),
     minWidth: 0,
     ...optionalConfig
@@ -109131,14 +109131,14 @@ ${formatValue2(value, entity, config)}`;
   }
   return seriesOpts;
 }
-function generateTheme(baseTheme) {
+function generateTheme(baseTheme, tooltipMode = "shared") {
   return {
     baseTheme,
     overrides: {
       common: {
         animation: { enabled: false },
         background: { visible: false },
-        tooltip: { mode: "shared" },
+        tooltip: { mode: tooltipMode },
         zoom: { buttons: { visible: "zoomed" } }
       },
       line: { series: { marker: { enabled: false } } }
@@ -109151,6 +109151,8 @@ function intervalToMs(interval) {
   switch (interval) {
     case "5minute":
       return 3e5;
+    case "30minute":
+      return 18e5;
     case "hour":
       return 36e5;
     case "day":
@@ -109163,7 +109165,7 @@ function intervalToMs(interval) {
       return 3e5;
   }
 }
-async function fetchRecent(hass, entityId, start2, end3, interval) {
+async function fetchRecent(hass, entityId, start2, end3, interval, aggregation = "mean") {
   try {
     let url = "history/period";
     if (start2)
@@ -109187,18 +109189,28 @@ async function fetchRecent(hass, entityId, start2, end3, interval) {
     const startMs = Math.floor(start2.getTime() / intervalMs) * intervalMs;
     const endMs = end3.getTime();
     const dataPoints = [];
-    let historyIdx = 0;
-    let currentValue = historyPoints[0].value;
-    for (let bucketTime = startMs; bucketTime <= endMs; bucketTime += intervalMs) {
-      while (historyIdx < historyPoints.length && historyPoints[historyIdx].time <= bucketTime) {
-        currentValue = historyPoints[historyIdx].value;
-        historyIdx++;
+    const buckets = /* @__PURE__ */ new Map();
+    for (let t4 = startMs; t4 <= endMs; t4 += intervalMs) {
+      buckets.set(t4, []);
+    }
+    for (const { time, value } of historyPoints) {
+      const bucketTime = Math.floor(time / intervalMs) * intervalMs;
+      buckets.get(bucketTime)?.push(value);
+    }
+    let lastValue = historyPoints[0].value;
+    for (const [bucketTime, values] of buckets) {
+      let value;
+      if (aggregation === "sum") {
+        value = values.length > 0 ? values.reduce((a3, b3) => a3 + b3, 0) : 0;
+      } else {
+        if (values.length > 0) {
+          value = values.reduce((a3, b3) => a3 + b3, 0) / values.length;
+          lastValue = value;
+        } else {
+          value = lastValue;
+        }
       }
-      dataPoints.push({
-        start: bucketTime,
-        mean: currentValue,
-        state: currentValue
-      });
+      dataPoints.push({ start: bucketTime, mean: value, state: value });
     }
     return dataPoints.length > 0 ? dataPoints : void 0;
   } catch (e5) {
@@ -109235,9 +109247,9 @@ function fetchAttributeData(hass, entityId, attribute, valueField, timestampFiel
   dataPoints.sort((a3, b3) => a3.start - b3.start);
   return dataPoints.length > 0 ? dataPoints : void 0;
 }
-async function fetchEntityData(hass, entityId, start2, end3, interval, dataSource = "auto") {
+async function fetchEntityData(hass, entityId, start2, end3, interval, dataSource = "auto", aggregation = "mean") {
   if (dataSource === "history") {
-    return fetchRecent(hass, entityId, start2, end3, interval);
+    return fetchRecent(hass, entityId, start2, end3, interval, aggregation);
   }
   const stats = await fetchStatistics(hass, entityId, start2, end3, interval);
   if (stats && stats.length > 0) {
@@ -109248,7 +109260,7 @@ async function fetchEntityData(hass, entityId, start2, end3, interval, dataSourc
     }));
   }
   if (dataSource === "auto") {
-    return fetchRecent(hass, entityId, start2, end3, interval);
+    return fetchRecent(hass, entityId, start2, end3, interval, aggregation);
   }
   return void 0;
 }
@@ -109311,8 +109323,9 @@ async function updateData(context, hass) {
           entity.entity,
           new Date(Date.now() - period * 24 * 36e5),
           /* @__PURE__ */ new Date(),
-          interval,
-          entityConfig?.dataSource ?? "auto"
+          entityConfig?.interval || interval,
+          entityConfig?.dataSource ?? "auto",
+          entityConfig?.aggregation || "mean"
         );
       }
       for (const { start: start2, mean, state } of stats ?? []) {
@@ -109983,6 +109996,40 @@ var ADVANCED_SCHEMA = [
       }
     }
   },
+  {
+    type: "grid",
+    name: "",
+    column_min_width: "100px",
+    schema: [
+      {
+        name: "interval",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "", label: "Default" },
+              { value: "5minute", label: "5 Minutes" },
+              { value: "30minute", label: "30 Minutes" },
+              { value: "hour", label: "Hour" },
+              { value: "day", label: "Day" }
+            ]
+          }
+        }
+      },
+      {
+        name: "aggregation",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "", label: "Mean (default)" },
+              { value: "sum", label: "Sum" }
+            ]
+          }
+        }
+      }
+    ]
+  },
   { name: "attribute", selector: { text: {} } },
   { name: "attributeField", selector: { text: {} } },
   { name: "attributeTimestampField", selector: { text: {} } },
@@ -110010,6 +110057,8 @@ var LABELS = {
   yUnits: "Y Units",
   offsetXs: "X Offset (seconds)",
   dataSource: "Data Source",
+  interval: "Interval",
+  aggregation: "Aggregation",
   attribute: "Attribute Name",
   attributeField: "Value Field",
   attributeTimestampField: "Timestamp Field",
@@ -110054,11 +110103,17 @@ var AgChartsEntityEditor = class extends r4 {
     const showPath = this.entity.action === "navigate";
     const showAttribute = this.entity.dataSource === "attribute";
     const attributeFields = ["attribute", "attributeField", "attributeTimestampField"];
+    const historyOnlyFields = ["interval", "aggregation"];
     const filteredAdvancedSchema = ADVANCED_SCHEMA.filter((s3) => {
       if (s3.name === "path")
         return showPath;
       if (attributeFields.includes(s3.name))
         return showAttribute;
+      if ("schema" in s3 && Array.isArray(s3.schema)) {
+        const childNames = s3.schema.map((c4) => c4.name);
+        if (childNames.some((n5) => historyOnlyFields.includes(n5)))
+          return !showAttribute;
+      }
       return true;
     });
     return x`
@@ -110462,6 +110517,18 @@ var BASE_SCHEMA = [
             ]
           }
         }
+      },
+      {
+        name: "tooltip",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "", label: "Shared (default)" },
+              { value: "exact", label: "Single Series" }
+            ]
+          }
+        }
       }
     ]
   }
@@ -110489,6 +110556,7 @@ var LABELS3 = {
   refresh: "Refresh Interval",
   legend: "Legend Position",
   yAxis: "Y-Axis",
+  tooltip: "Tooltip Mode",
   total: "Total Entity",
   totalMultiplier: "Total Multiplier",
   unknownName: "Unknown Value Name"
@@ -110650,7 +110718,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.4.0-beta.2`,
+%cVersion: 0.4.0-beta.3`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
