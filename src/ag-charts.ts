@@ -8,8 +8,9 @@ import {
     NumberAxisModule,
     TimeAxisModule,
     LegendModule,
+    CategoryAxisModule,
 } from 'ag-charts-community';
-import { ZoomModule } from 'ag-charts-enterprise';
+import { ZoomModule, OrdinalTimeAxisModule } from 'ag-charts-enterprise';
 import { Config, Hass, HassEntity } from './types';
 import { setupDOM } from './dom';
 import { buildSeriesConfig } from './series';
@@ -25,10 +26,12 @@ ModuleRegistry.registerModules([
     TimeAxisModule,
     ZoomModule,
     LegendModule,
+    CategoryAxisModule,
+    OrdinalTimeAxisModule,
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.4.0-beta.1`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.4.0-beta.2`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
