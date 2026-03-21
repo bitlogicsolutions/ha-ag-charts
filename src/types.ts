@@ -15,6 +15,7 @@ export interface Config {
     total?: string;
     totalMultiplier?: number;
     unknownName?: string;
+    crosslines?: CrossLine[];
 }
 
 export type DataSource = 'auto' | 'statistics' | 'history' | 'attribute';
@@ -60,6 +61,33 @@ export interface CartesianSeries {
     timeUnit?: 'continuous' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'ordinal';
     minY?: number;
     maxY?: number;
+}
+
+export interface CrossLine {
+    type: 'line' | 'range';
+    axis: 'x' | 'y';
+    value?: number;
+    range?: [number, number];
+    stroke?: string;
+    strokeWidth?: number;
+    fill?: string;
+    fillOpacity?: number;
+    lineDash?: string;
+    label?: string;
+    labelPosition?:
+        | 'top'
+        | 'bottom'
+        | 'left'
+        | 'right'
+        | 'topLeft'
+        | 'topRight'
+        | 'bottomLeft'
+        | 'bottomRight'
+        | 'inside'
+        | 'insideLeft'
+        | 'insideRight'
+        | 'insideTop'
+        | 'insideBottom';
 }
 
 export type Series = PieSeries | CartesianSeries;

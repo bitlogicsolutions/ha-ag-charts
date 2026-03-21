@@ -31,7 +31,7 @@ ModuleRegistry.registerModules([
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.4.0`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.5.0-beta.1`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''

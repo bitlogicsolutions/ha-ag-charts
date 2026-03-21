@@ -3,11 +3,12 @@ import {
     AgBarSeriesOptions,
     AgCartesianChartOptions,
     AgChartOptions,
+    AgChartTheme,
     AgChartThemeName,
     AgLineSeriesOptions,
     AgPieSeriesOptions,
 } from 'ag-charts-enterprise';
-import { CartesianSeries, Context, Hass, PieSeries } from './types';
+import { CartesianSeries, Context, CrossLine, Hass, PieSeries } from './types';
 import { readEntityConfig, unitOfMeasurement, key, formatPieTooltip, formatValue } from './utils';
 import { performAction } from './actions';
 
@@ -76,6 +77,24 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
             // Let AG Charts auto-calculate tick intervals to avoid label overlap
             // nice: false prevents padding the domain beyond the data range
             axes.x = { type: 'time', position: 'bottom', nice: false };
+        }
+
+        // Apply crosslines to axes
+        const crosslines = context.config?.crosslines ?? [];
+        if (crosslines.length > 0) {
+            const yCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'y'));
+            const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'));
+
+            if (yCrossLines.length > 0) {
+                // Apply to first y-axis
+                const firstYKey = axisConfigs[0]?.key;
+                if (firstYKey && axes[firstYKey]) {
+                    axes[firstYKey].crossLines = yCrossLines;
+                }
+            }
+            if (xCrossLines.length > 0 && axes.x) {
+                axes.x.crossLines = xCrossLines;
+            }
         }
 
         optionalConfig.axes = axes;
@@ -219,17 +238,46 @@ function generateSeriesOpts(
     return seriesOpts;
 }
 
-function generateTheme(baseTheme: AgChartThemeName, tooltipMode: 'shared' | 'exact' = 'shared') {
+function buildCrossLines(crosslines: CrossLine[]) {
+    return crosslines.map(cl => {
+        const result: any = { type: cl.type };
+
+        if (cl.type === 'range' && cl.range) {
+            result.range = cl.range;
+        } else if (cl.value != null) {
+            result.value = cl.value;
+        }
+
+        if (cl.stroke) result.stroke = cl.stroke;
+        if (typeof cl.strokeWidth === 'number') result.strokeWidth = cl.strokeWidth;
+        if (cl.fill) result.fill = cl.fill;
+        if (typeof cl.fillOpacity === 'number') result.fillOpacity = cl.fillOpacity;
+        if (cl.lineDash) {
+            result.lineDash = cl.lineDash.split(',').map(Number);
+        }
+
+        if (cl.label) {
+            result.label = {
+                text: cl.label,
+                ...(cl.labelPosition ? { position: cl.labelPosition } : {}),
+            };
+        }
+
+        return result;
+    });
+}
+
+function generateTheme(baseTheme: AgChartThemeName, tooltipMode: 'shared' | 'exact' = 'shared'): AgChartTheme {
     return {
         baseTheme,
         overrides: {
             common: {
                 animation: { enabled: false },
                 background: { visible: false },
-                tooltip: { mode: tooltipMode as const },
-                zoom: { buttons: { visible: 'zoomed' as const } },
+                tooltip: { mode: tooltipMode },
+                zoom: { buttons: { visible: 'zoomed' } },
             },
             line: { series: { marker: { enabled: false } } },
         },
-    };
+    } as AgChartTheme;
 }

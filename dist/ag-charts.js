@@ -109019,6 +109019,20 @@ function buildSeriesConfig(context, hass) {
     } else {
       axes.x = { type: "time", position: "bottom", nice: false };
     }
+    const crosslines = context.config?.crosslines ?? [];
+    if (crosslines.length > 0) {
+      const yCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "y"));
+      const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"));
+      if (yCrossLines.length > 0) {
+        const firstYKey = axisConfigs[0]?.key;
+        if (firstYKey && axes[firstYKey]) {
+          axes[firstYKey].crossLines = yCrossLines;
+        }
+      }
+      if (xCrossLines.length > 0 && axes.x) {
+        axes.x.crossLines = xCrossLines;
+      }
+    }
     optionalConfig.axes = axes;
   }
   if (legend === "none") {
@@ -109138,6 +109152,34 @@ ${formatValue2(value, entity, config)}`;
     }
   }
   return seriesOpts;
+}
+function buildCrossLines(crosslines) {
+  return crosslines.map((cl) => {
+    const result = { type: cl.type };
+    if (cl.type === "range" && cl.range) {
+      result.range = cl.range;
+    } else if (cl.value != null) {
+      result.value = cl.value;
+    }
+    if (cl.stroke)
+      result.stroke = cl.stroke;
+    if (typeof cl.strokeWidth === "number")
+      result.strokeWidth = cl.strokeWidth;
+    if (cl.fill)
+      result.fill = cl.fill;
+    if (typeof cl.fillOpacity === "number")
+      result.fillOpacity = cl.fillOpacity;
+    if (cl.lineDash) {
+      result.lineDash = cl.lineDash.split(",").map(Number);
+    }
+    if (cl.label) {
+      result.label = {
+        text: cl.label,
+        ...cl.labelPosition ? { position: cl.labelPosition } : {}
+      };
+    }
+    return result;
+  });
 }
 function generateTheme(baseTheme, tooltipMode = "shared") {
   return {
@@ -110462,6 +110504,325 @@ AgChartsSeriesListEditor = __decorateClass([
   t3("ag-charts-series-list-editor")
 ], AgChartsSeriesListEditor);
 
+// src/editor/crossline-editor.ts
+var TYPE_OPTIONS2 = [
+  { value: "line", label: "Line" },
+  { value: "range", label: "Range" }
+];
+var AXIS_OPTIONS = [
+  { value: "y", label: "Y-Axis" },
+  { value: "x", label: "X-Axis" }
+];
+var LABEL_POSITION_OPTIONS = [
+  { value: "", label: "Default" },
+  { value: "top", label: "Top" },
+  { value: "bottom", label: "Bottom" },
+  { value: "left", label: "Left" },
+  { value: "right", label: "Right" },
+  { value: "topLeft", label: "Top Left" },
+  { value: "topRight", label: "Top Right" },
+  { value: "bottomLeft", label: "Bottom Left" },
+  { value: "bottomRight", label: "Bottom Right" },
+  { value: "inside", label: "Inside" },
+  { value: "insideLeft", label: "Inside Left" },
+  { value: "insideRight", label: "Inside Right" },
+  { value: "insideTop", label: "Inside Top" },
+  { value: "insideBottom", label: "Inside Bottom" }
+];
+var LINE_DASH_OPTIONS = [
+  { value: "", label: "Solid" },
+  { value: "6,3", label: "Dashed" },
+  { value: "2,2", label: "Dotted" },
+  { value: "8,4,2,4", label: "Dash-Dot" }
+];
+var BASE_SCHEMA = [
+  {
+    type: "grid",
+    name: "",
+    column_min_width: "100px",
+    schema: [
+      {
+        name: "type",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: TYPE_OPTIONS2
+          }
+        }
+      },
+      {
+        name: "axis",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: AXIS_OPTIONS
+          }
+        }
+      }
+    ]
+  }
+];
+var LINE_VALUE_SCHEMA = [
+  { name: "value", selector: { number: { mode: "box", step: 0.01 } } }
+];
+var RANGE_VALUE_SCHEMA = [
+  {
+    type: "grid",
+    name: "",
+    column_min_width: "100px",
+    schema: [
+      { name: "rangeFrom", selector: { number: { mode: "box", step: 0.01 } } },
+      { name: "rangeTo", selector: { number: { mode: "box", step: 0.01 } } }
+    ]
+  }
+];
+var STYLE_SCHEMA = [
+  {
+    type: "expandable",
+    name: "",
+    title: "Style",
+    schema: [
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "stroke", selector: { color_rgb: {} } },
+          { name: "fill", selector: { color_rgb: {} } }
+        ]
+      },
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "strokeWidth", selector: { number: { mode: "box", min: 0, step: 1 } } },
+          { name: "fillOpacity", selector: { number: { mode: "box", min: 0, max: 1, step: 0.1 } } }
+        ]
+      },
+      {
+        name: "lineDash",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: LINE_DASH_OPTIONS
+          }
+        }
+      }
+    ]
+  }
+];
+var LABEL_SCHEMA = [
+  {
+    type: "expandable",
+    name: "",
+    title: "Label",
+    schema: [
+      { name: "label", selector: { text: {} } },
+      {
+        name: "labelPosition",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: LABEL_POSITION_OPTIONS
+          }
+        }
+      }
+    ]
+  }
+];
+var LABELS3 = {
+  type: "Type",
+  axis: "Axis",
+  value: "Value",
+  rangeFrom: "Range From",
+  rangeTo: "Range To",
+  stroke: "Stroke Color",
+  strokeWidth: "Stroke Width",
+  fill: "Fill Color",
+  fillOpacity: "Fill Opacity",
+  lineDash: "Line Style",
+  label: "Label Text",
+  labelPosition: "Label Position"
+};
+var AgChartsCrosslineEditor = class extends r4 {
+  constructor() {
+    super(...arguments);
+    this._computeLabel = (schema) => {
+      return LABELS3[schema.name] || schema.name;
+    };
+  }
+  // Flatten crossline for form data (range -> rangeFrom/rangeTo)
+  _getFormData() {
+    const { range: range3, ...rest } = this.crossline;
+    return {
+      ...rest,
+      rangeFrom: range3?.[0],
+      rangeTo: range3?.[1]
+    };
+  }
+  _valueChanged(ev) {
+    ev.stopPropagation();
+    const formData = { ...this._getFormData(), ...ev.detail.value };
+    const { rangeFrom, rangeTo, ...crossline } = formData;
+    if (crossline.type === "range") {
+      crossline.range = [
+        typeof rangeFrom === "number" ? rangeFrom : 0,
+        typeof rangeTo === "number" ? rangeTo : 0
+      ];
+      delete crossline.value;
+    } else {
+      delete crossline.range;
+    }
+    this._fireChanged(crossline);
+  }
+  _fireChanged(crossline) {
+    this.dispatchEvent(
+      new CustomEvent("crossline-changed", {
+        detail: { index: this.index, crossline },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  _remove() {
+    this.dispatchEvent(
+      new CustomEvent("crossline-removed", {
+        detail: { index: this.index },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  _getSchema() {
+    const isRange = this.crossline.type === "range";
+    return [
+      ...BASE_SCHEMA,
+      ...isRange ? RANGE_VALUE_SCHEMA : LINE_VALUE_SCHEMA,
+      ...STYLE_SCHEMA,
+      ...LABEL_SCHEMA
+    ];
+  }
+  _summary() {
+    const { type, axis, value, range: range3, label } = this.crossline;
+    const axisLabel3 = axis === "x" ? "X" : "Y";
+    let desc = `${axisLabel3}-Axis`;
+    if (type === "range" && range3) {
+      desc += ` range [${range3[0]}, ${range3[1]}]`;
+    } else if (value != null) {
+      desc += ` @ ${value}`;
+    }
+    if (label)
+      desc += ` "${label}"`;
+    return desc;
+  }
+  render() {
+    return x`
+            <div style="display: block; margin-bottom: 8px;">
+                <ha-expansion-panel outlined>
+                    <div slot="header" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <span>Crossline ${this.index + 1}: ${this._summary()}</span>
+                        <ha-icon-button
+                            style="margin-right: -8px;"
+                            .path=${"M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"}
+                            @click=${this._remove}
+                        ></ha-icon-button>
+                    </div>
+                    <div style="padding: 16px;">
+                        <ha-form
+                            .hass=${this.hass}
+                            .data=${this._getFormData()}
+                            .schema=${this._getSchema()}
+                            .computeLabel=${this._computeLabel}
+                            @value-changed=${this._valueChanged}
+                        ></ha-form>
+                    </div>
+                </ha-expansion-panel>
+            </div>
+        `;
+  }
+};
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsCrosslineEditor.prototype, "hass", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsCrosslineEditor.prototype, "crossline", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsCrosslineEditor.prototype, "index", 2);
+AgChartsCrosslineEditor = __decorateClass([
+  t3("ag-charts-crossline-editor")
+], AgChartsCrosslineEditor);
+
+// src/editor/crossline-list-editor.ts
+var AgChartsCrosslineListEditor = class extends r4 {
+  constructor() {
+    super(...arguments);
+    this.crosslines = [];
+  }
+  _crosslineChanged(ev) {
+    ev.stopPropagation();
+    const { index, crossline } = ev.detail;
+    const updated = [...this.crosslines];
+    updated[index] = crossline;
+    this._fireChanged(updated);
+  }
+  _crosslineRemoved(ev) {
+    ev.stopPropagation();
+    const { index } = ev.detail;
+    const updated = this.crosslines.filter((_2, i5) => i5 !== index);
+    this._fireChanged(updated);
+  }
+  _addCrossline() {
+    const updated = [...this.crosslines];
+    updated.push({ type: "line", axis: "y" });
+    this._fireChanged(updated);
+  }
+  _fireChanged(crosslines) {
+    this.dispatchEvent(
+      new CustomEvent("crosslines-changed", {
+        detail: { crosslines },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+  render() {
+    return x`
+            <div style="display: block;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <h3 style="margin: 0;">Crosslines</h3>
+                    <ha-button @click=${this._addCrossline}>Add Crossline</ha-button>
+                </div>
+                ${this.crosslines.map(
+      (crossline, i5) => x`
+                        <ag-charts-crossline-editor
+                            .hass=${this.hass}
+                            .crossline=${crossline}
+                            .index=${i5}
+                            @crossline-changed=${this._crosslineChanged}
+                            @crossline-removed=${this._crosslineRemoved}
+                        ></ag-charts-crossline-editor>
+                    `
+    )}
+                ${this.crosslines.length === 0 ? x`<p style="color: var(--secondary-text-color); font-style: italic; text-align: center; padding: 8px;">
+                          No crosslines configured. Click "Add Crossline" to add one.
+                      </p>` : ""}
+            </div>
+        `;
+  }
+};
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsCrosslineListEditor.prototype, "hass", 2);
+__decorateClass([
+  n4({ attribute: false })
+], AgChartsCrosslineListEditor.prototype, "crosslines", 2);
+AgChartsCrosslineListEditor = __decorateClass([
+  t3("ag-charts-crossline-list-editor")
+], AgChartsCrosslineListEditor);
+
 // src/ha-ag-charts-editor.ts
 var THEMES = [
   { value: "ag-default", label: "Default" },
@@ -110471,7 +110832,7 @@ var THEMES = [
   { value: "ag-vivid", label: "Vivid" },
   { value: "ag-vivid-dark", label: "Vivid Dark" }
 ];
-var BASE_SCHEMA = [
+var BASE_SCHEMA2 = [
   { name: "title", selector: { text: {} } },
   {
     name: "theme",
@@ -110559,7 +110920,7 @@ var PIE_OPTIONS_SCHEMA = {
     }
   ]
 };
-var LABELS3 = {
+var LABELS4 = {
   title: "Title",
   theme: "Theme",
   period: "Period",
@@ -110575,7 +110936,7 @@ var HAAgChartsEditor = class extends r4 {
   constructor() {
     super(...arguments);
     this._computeLabel = (schema) => {
-      return LABELS3[schema.name] || schema.name;
+      return LABELS4[schema.name] || schema.name;
     };
   }
   setConfig(config) {
@@ -110593,6 +110954,13 @@ var HAAgChartsEditor = class extends r4 {
     if (!this._config)
       return;
     const newConfig = { ...this._config, series: ev.detail.series };
+    this._fireConfigChanged(newConfig);
+  }
+  _crosslinesChanged(ev) {
+    ev.stopPropagation();
+    if (!this._config)
+      return;
+    const newConfig = { ...this._config, crosslines: ev.detail.crosslines };
     this._fireConfigChanged(newConfig);
   }
   _entityChanged(ev) {
@@ -110636,7 +111004,7 @@ var HAAgChartsEditor = class extends r4 {
     return (this._config?.series || []).some((s3) => s3.type === "pie");
   }
   _getSchema() {
-    return BASE_SCHEMA;
+    return BASE_SCHEMA2;
   }
   _getPieSchema() {
     return [PIE_OPTIONS_SCHEMA];
@@ -110663,6 +111031,14 @@ var HAAgChartsEditor = class extends r4 {
                         .series=${this._config.series || []}
                         @series-changed=${this._seriesChanged}
                     ></ag-charts-series-list-editor>
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <ag-charts-crossline-list-editor
+                        .hass=${this.hass}
+                        .crosslines=${this._config.crosslines || []}
+                        @crosslines-changed=${this._crosslinesChanged}
+                    ></ag-charts-crossline-list-editor>
                 </div>
 
                 ${hasPie ? x`
@@ -110728,7 +111104,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.4.0`,
+%cVersion: 0.5.0-beta.1`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

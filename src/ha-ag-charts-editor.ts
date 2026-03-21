@@ -2,6 +2,7 @@ import { LitElement, html, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Config, ConfigEntity, Entity } from './types';
 import './editor/series-list-editor';
+import './editor/crossline-list-editor';
 import './editor/entity-editor';
 
 declare global {
@@ -151,6 +152,14 @@ export class HAAgChartsEditor extends LitElement {
         this._fireConfigChanged(newConfig);
     }
 
+    private _crosslinesChanged(ev: CustomEvent): void {
+        ev.stopPropagation();
+        if (!this._config) return;
+
+        const newConfig = { ...this._config, crosslines: ev.detail.crosslines };
+        this._fireConfigChanged(newConfig);
+    }
+
     private _entityChanged(ev: CustomEvent): void {
         ev.stopPropagation();
         if (!this._config) return;
@@ -229,6 +238,14 @@ export class HAAgChartsEditor extends LitElement {
                         .series=${this._config.series || []}
                         @series-changed=${this._seriesChanged}
                     ></ag-charts-series-list-editor>
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <ag-charts-crossline-list-editor
+                        .hass=${this.hass}
+                        .crosslines=${this._config.crosslines || []}
+                        @crosslines-changed=${this._crosslinesChanged}
+                    ></ag-charts-crossline-list-editor>
                 </div>
 
                 ${hasPie
