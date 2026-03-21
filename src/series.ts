@@ -126,6 +126,7 @@ function generateSeriesOpts(
             case 'line':
             case 'bar':
             case 'area':
+                let legendShown = false;
                 for (const entityConfig of entities) {
                     const entity = readEntityConfig(hass, entityConfig);
                     const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
@@ -133,7 +134,13 @@ function generateSeriesOpts(
                     const optional: any = {};
                     if (entity.fill) optional.fill = entity.fill;
                     if (entity.stroke) optional.stroke = entity.stroke;
-                    if (legendItemName) optional.legendItemName = legendItemName;
+                    if (legendItemName) {
+                        optional.legendItemName = legendItemName;
+                        if (legendShown) {
+                            optional.showInLegend = false;
+                        }
+                        legendShown = true;
+                    }
                     // Only specify yKeyAxis if there are multiple y-axes
                     if (unitToAxisKey.size > 1 && axisKey) {
                         optional.yKeyAxis = axisKey;

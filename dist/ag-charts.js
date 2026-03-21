@@ -109052,6 +109052,7 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
       case "line":
       case "bar":
       case "area":
+        let legendShown = false;
         for (const entityConfig of entities) {
           const entity = readEntityConfig(hass, entityConfig);
           const unit = entity.yUnits ?? unitOfMeasurement(hass, entity);
@@ -109061,8 +109062,13 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
             optional.fill = entity.fill;
           if (entity.stroke)
             optional.stroke = entity.stroke;
-          if (legendItemName)
+          if (legendItemName) {
             optional.legendItemName = legendItemName;
+            if (legendShown) {
+              optional.showInLegend = false;
+            }
+            legendShown = true;
+          }
           if (unitToAxisKey.size > 1 && axisKey) {
             optional.yKeyAxis = axisKey;
           }
@@ -110722,7 +110728,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.4.0-beta.4`,
+%cVersion: 0.4.0-beta.5`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
