@@ -109047,7 +109047,7 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
   const cartesianSeries = series.filter((s3) => s3.type !== "pie");
   const pieSeries = series.filter((s3) => s3.type === "pie");
   for (const series2 of cartesianSeries) {
-    const { type, entities = [], stacked } = series2;
+    const { type, entities = [], stacked, legendItemName } = series2;
     switch (type) {
       case "line":
       case "bar":
@@ -109061,6 +109061,8 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
             optional.fill = entity.fill;
           if (entity.stroke)
             optional.stroke = entity.stroke;
+          if (legendItemName)
+            optional.legendItemName = legendItemName;
           if (unitToAxisKey.size > 1 && axisKey) {
             optional.yKeyAxis = axisKey;
           }
@@ -110190,6 +110192,7 @@ var CARTESIAN_SCHEMA = [
     }
   },
   { name: "stacked", selector: { boolean: {} } },
+  { name: "legendItemName", selector: { text: {} } },
   {
     type: "grid",
     name: "",
@@ -110248,6 +110251,7 @@ var PIE_SCHEMA = [
 var LABELS2 = {
   type: "Type",
   stacked: "Stacked",
+  legendItemName: "Legend Group Name",
   minY: "Min Y",
   maxY: "Max Y",
   calloutLabel: "Callout Label",
@@ -110718,7 +110722,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.4.0-beta.3`,
+%cVersion: 0.4.0-beta.4`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

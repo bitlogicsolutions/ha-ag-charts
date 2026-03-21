@@ -29,6 +29,7 @@ const CARTESIAN_SCHEMA = [
         },
     },
     { name: 'stacked', selector: { boolean: {} } },
+    { name: 'legendItemName', selector: { text: {} } },
     {
         type: 'grid',
         name: '',
@@ -89,6 +90,7 @@ const PIE_SCHEMA = [
 const LABELS: Record<string, string> = {
     type: 'Type',
     stacked: 'Stacked',
+    legendItemName: 'Legend Group Name',
     minY: 'Min Y',
     maxY: 'Max Y',
     calloutLabel: 'Callout Label',

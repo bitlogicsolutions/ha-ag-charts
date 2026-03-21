@@ -121,7 +121,7 @@ function generateSeriesOpts(
     const cartesianSeries = series.filter((s): s is CartesianSeries => s.type !== 'pie');
     const pieSeries = series.filter((s): s is PieSeries => s.type === 'pie');
     for (const series of cartesianSeries) {
-        const { type, entities = [], stacked } = series;
+        const { type, entities = [], stacked, legendItemName } = series;
         switch (type) {
             case 'line':
             case 'bar':
@@ -133,6 +133,7 @@ function generateSeriesOpts(
                     const optional: any = {};
                     if (entity.fill) optional.fill = entity.fill;
                     if (entity.stroke) optional.stroke = entity.stroke;
+                    if (legendItemName) optional.legendItemName = legendItemName;
                     // Only specify yKeyAxis if there are multiple y-axes
                     if (unitToAxisKey.size > 1 && axisKey) {
                         optional.yKeyAxis = axisKey;
