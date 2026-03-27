@@ -1,6 +1,6 @@
 {
     "name": "ha-ag-charts",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "AG Charts integration for Home Assistant",
     "main": "dist/ag-charts.js",
     "author": "Alan Treadway",
@@ -15,8 +15,8 @@
         "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
     },
     "dependencies": {
-        "ag-charts-community": "^13.1.0",
-        "ag-charts-enterprise": "^13.1.0",
+        "ag-charts-community": "^13.2.0",
+        "ag-charts-enterprise": "^13.2.0",
         "lit": "^3.1.0"
     },
     "devDependencies": {
