@@ -1,6 +1,6 @@
 {
     "name": "ha-ag-charts",
-    "version": "0.7.0-beta.1",
+    "version": "0.7.0",
     "description": "AG Charts integration for Home Assistant",
     "main": "dist/ag-charts.js",
     "author": "Alan Treadway",
