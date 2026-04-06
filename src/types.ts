@@ -68,6 +68,8 @@ export interface CrossLine {
     axis: 'x' | 'y';
     value?: number;
     range?: [number, number];
+    dateValue?: string;
+    dateRange?: [string, string];
     stroke?: string;
     strokeWidth?: number;
     fill?: string;

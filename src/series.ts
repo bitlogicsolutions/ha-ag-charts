@@ -238,12 +238,41 @@ function generateSeriesOpts(
     return seriesOpts;
 }
 
+function resolveDateKeyword(keyword: string): number {
+    const now = new Date();
+
+    if (keyword === 'now') {
+        const rounded = new Date(now);
+        rounded.setMinutes(Math.floor(rounded.getMinutes() / 30) * 30, 0, 0);
+        return rounded.getTime();
+    }
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (keyword === 'today') return today.getTime();
+    if (keyword === 'yesterday') return today.getTime() - 86_400_000;
+    if (keyword === 'tomorrow') return today.getTime() + 86_400_000;
+
+    const match = keyword.match(/^(today|yesterday|tomorrow)([+-]\d+)$/);
+    if (match) {
+        const base = resolveDateKeyword(match[1]);
+        const offset = parseInt(match[2]) * 86_400_000;
+        return base + offset;
+    }
+
+    return Number(keyword);
+}
+
 function buildCrossLines(crosslines: CrossLine[]) {
     return crosslines.map(cl => {
         const result: any = { type: cl.type };
 
-        if (cl.type === 'range' && cl.range) {
+        if (cl.type === 'range' && cl.dateRange) {
+            result.range = cl.dateRange.map(resolveDateKeyword);
+        } else if (cl.type === 'range' && cl.range) {
             result.range = cl.range;
+        } else if (cl.dateValue) {
+            result.value = resolveDateKeyword(cl.dateValue);
         } else if (cl.value != null) {
             result.value = cl.value;
         }
@@ -265,6 +294,16 @@ function buildCrossLines(crosslines: CrossLine[]) {
 
         return result;
     });
+}
+
+export function buildCrossLinesDelta(context: Context): Record<string, any> | null {
+    const crosslines = context.config?.crosslines ?? [];
+    if (crosslines.length === 0) return null;
+
+    const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'));
+    if (xCrossLines.length === 0) return null;
+
+    return { x: { crossLines: xCrossLines } };
 }
 
 function generateTheme(baseTheme: AgChartThemeName, tooltipMode: 'shared' | 'exact' = 'shared'): AgChartTheme {

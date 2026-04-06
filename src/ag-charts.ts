@@ -13,7 +13,7 @@ import {
 import { ZoomModule, OrdinalTimeAxisModule } from 'ag-charts-enterprise';
 import { Config, Hass, HassEntity } from './types';
 import { setupDOM } from './dom';
-import { buildSeriesConfig } from './series';
+import { buildSeriesConfig, buildCrossLinesDelta } from './series';
 import { updateData } from './data';
 import './ha-ag-charts-editor';
 
@@ -31,7 +31,7 @@ ModuleRegistry.registerModules([
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.6.0`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.7.0-beta.1`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
@@ -45,6 +45,7 @@ class HAAgCharts extends HTMLElement {
     lastUpdateData = -Infinity;
 
     private phase: 'init' | 'ready' = 'init';
+    private nowTimerId?: ReturnType<typeof setTimeout>;
 
     constructor() {
         super();
@@ -87,9 +88,50 @@ class HAAgCharts extends HTMLElement {
         if (this.phase === 'init') {
             this.chartInstance = AgCharts.create(buildSeriesConfig(this, hass));
             this.phase = 'ready';
+            this.startCrosslineTimer();
         }
 
         this.updateData(hass);
+    }
+
+    disconnectedCallback(): void {
+        this.stopCrosslineTimer();
+    }
+
+    private hasDynamicCrosslines(): boolean {
+        return (this.config?.crosslines ?? []).some(
+            c => c.dateValue === 'now' || c.dateRange?.includes('now')
+        );
+    }
+
+    private startCrosslineTimer(): void {
+        this.stopCrosslineTimer();
+        if (!this.hasDynamicCrosslines()) return;
+
+        const MS_30_MIN = 30 * 60 * 1000;
+        const now = Date.now();
+        const nextTick = Math.ceil(now / MS_30_MIN) * MS_30_MIN;
+        const initialDelay = nextTick - now;
+
+        this.nowTimerId = setTimeout(() => {
+            this.refreshCrosslines();
+            this.nowTimerId = setInterval(() => this.refreshCrosslines(), MS_30_MIN) as any;
+        }, initialDelay);
+    }
+
+    private stopCrosslineTimer(): void {
+        if (this.nowTimerId != null) {
+            clearTimeout(this.nowTimerId);
+            clearInterval(this.nowTimerId);
+            this.nowTimerId = undefined;
+        }
+    }
+
+    private refreshCrosslines(): void {
+        const delta = buildCrossLinesDelta(this);
+        if (delta) {
+            this.chartInstance?.updateDelta({ axes: delta });
+        }
     }
 
     async updateData(hass: Hass) {

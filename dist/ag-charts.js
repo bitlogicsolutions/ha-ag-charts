@@ -116932,11 +116932,37 @@ ${formatValue2(value, entity, config)}`;
   }
   return seriesOpts;
 }
+function resolveDateKeyword(keyword) {
+  const now = /* @__PURE__ */ new Date();
+  if (keyword === "now") {
+    const rounded = new Date(now);
+    rounded.setMinutes(Math.floor(rounded.getMinutes() / 30) * 30, 0, 0);
+    return rounded.getTime();
+  }
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (keyword === "today")
+    return today.getTime();
+  if (keyword === "yesterday")
+    return today.getTime() - 864e5;
+  if (keyword === "tomorrow")
+    return today.getTime() + 864e5;
+  const match = keyword.match(/^(today|yesterday|tomorrow)([+-]\d+)$/);
+  if (match) {
+    const base = resolveDateKeyword(match[1]);
+    const offset = parseInt(match[2]) * 864e5;
+    return base + offset;
+  }
+  return Number(keyword);
+}
 function buildCrossLines(crosslines) {
   return crosslines.map((cl) => {
     const result = { type: cl.type };
-    if (cl.type === "range" && cl.range) {
+    if (cl.type === "range" && cl.dateRange) {
+      result.range = cl.dateRange.map(resolveDateKeyword);
+    } else if (cl.type === "range" && cl.range) {
       result.range = cl.range;
+    } else if (cl.dateValue) {
+      result.value = resolveDateKeyword(cl.dateValue);
     } else if (cl.value != null) {
       result.value = cl.value;
     }
@@ -116959,6 +116985,15 @@ function buildCrossLines(crosslines) {
     }
     return result;
   });
+}
+function buildCrossLinesDelta(context) {
+  const crosslines = context.config?.crosslines ?? [];
+  if (crosslines.length === 0)
+    return null;
+  const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"));
+  if (xCrossLines.length === 0)
+    return null;
+  return { x: { crossLines: xCrossLines } };
 }
 function generateTheme(baseTheme, tooltipMode = "shared") {
   return {
@@ -118355,6 +118390,29 @@ var RANGE_VALUE_SCHEMA = [
     ]
   }
 ];
+var DATE_VALUE_OPTIONS = [
+  { value: "now", label: "Now" },
+  { value: "today", label: "Today (midnight)" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "tomorrow", label: "Tomorrow" },
+  { value: "today-1", label: "Today - 1" },
+  { value: "today+1", label: "Today + 1" },
+  { value: "today+2", label: "Today + 2" }
+];
+var DATE_LINE_VALUE_SCHEMA = [
+  { name: "dateValue", selector: { select: { mode: "dropdown", options: DATE_VALUE_OPTIONS } } }
+];
+var DATE_RANGE_VALUE_SCHEMA = [
+  {
+    type: "grid",
+    name: "",
+    column_min_width: "100px",
+    schema: [
+      { name: "dateRangeFrom", selector: { select: { mode: "dropdown", options: DATE_VALUE_OPTIONS } } },
+      { name: "dateRangeTo", selector: { select: { mode: "dropdown", options: DATE_VALUE_OPTIONS } } }
+    ]
+  }
+];
 var STYLE_SCHEMA = [
   {
     type: "expandable",
@@ -118416,6 +118474,9 @@ var LABELS3 = {
   value: "Value",
   rangeFrom: "Range From",
   rangeTo: "Range To",
+  dateValue: "Date Value",
+  dateRangeFrom: "Date Range From",
+  dateRangeTo: "Date Range To",
   stroke: "Stroke Color",
   strokeWidth: "Stroke Width",
   fill: "Fill Color",
@@ -118431,27 +118492,49 @@ var AgChartsCrosslineEditor = class extends r4 {
       return LABELS3[schema.name] || schema.name;
     };
   }
-  // Flatten crossline for form data (range -> rangeFrom/rangeTo)
+  // Flatten crossline for form data (range -> rangeFrom/rangeTo, dateRange -> dateRangeFrom/dateRangeTo)
   _getFormData() {
-    const { range: range3, ...rest } = this.crossline;
+    const { range: range3, dateRange, ...rest } = this.crossline;
     return {
       ...rest,
       rangeFrom: range3?.[0],
-      rangeTo: range3?.[1]
+      rangeTo: range3?.[1],
+      dateRangeFrom: dateRange?.[0],
+      dateRangeTo: dateRange?.[1]
     };
   }
   _valueChanged(ev) {
     ev.stopPropagation();
     const formData = { ...this._getFormData(), ...ev.detail.value };
-    const { rangeFrom, rangeTo, ...crossline } = formData;
+    const { rangeFrom, rangeTo, dateRangeFrom, dateRangeTo, ...crossline } = formData;
+    const isXAxis = crossline.axis === "x";
     if (crossline.type === "range") {
-      crossline.range = [
-        typeof rangeFrom === "number" ? rangeFrom : 0,
-        typeof rangeTo === "number" ? rangeTo : 0
-      ];
-      delete crossline.value;
+      if (isXAxis) {
+        crossline.dateRange = [dateRangeFrom || "today", dateRangeTo || "tomorrow"];
+        delete crossline.range;
+        delete crossline.value;
+        delete crossline.dateValue;
+      } else {
+        crossline.range = [
+          typeof rangeFrom === "number" ? rangeFrom : 0,
+          typeof rangeTo === "number" ? rangeTo : 0
+        ];
+        delete crossline.value;
+        delete crossline.dateValue;
+        delete crossline.dateRange;
+      }
     } else {
-      delete crossline.range;
+      if (isXAxis) {
+        if (!crossline.dateValue)
+          crossline.dateValue = "now";
+        delete crossline.value;
+        delete crossline.range;
+        delete crossline.dateRange;
+      } else {
+        delete crossline.range;
+        delete crossline.dateValue;
+        delete crossline.dateRange;
+      }
     }
     this._fireChanged(crossline);
   }
@@ -118475,19 +118558,25 @@ var AgChartsCrosslineEditor = class extends r4 {
   }
   _getSchema() {
     const isRange = this.crossline.type === "range";
-    return [
-      ...BASE_SCHEMA,
-      ...isRange ? RANGE_VALUE_SCHEMA : LINE_VALUE_SCHEMA,
-      ...STYLE_SCHEMA,
-      ...LABEL_SCHEMA
-    ];
+    const isXAxis = this.crossline.axis === "x";
+    let valueSchema;
+    if (isRange) {
+      valueSchema = isXAxis ? DATE_RANGE_VALUE_SCHEMA : RANGE_VALUE_SCHEMA;
+    } else {
+      valueSchema = isXAxis ? DATE_LINE_VALUE_SCHEMA : LINE_VALUE_SCHEMA;
+    }
+    return [...BASE_SCHEMA, ...valueSchema, ...STYLE_SCHEMA, ...LABEL_SCHEMA];
   }
   _summary() {
-    const { type, axis, value, range: range3, label } = this.crossline;
+    const { type, axis, value, range: range3, dateValue, dateRange, label } = this.crossline;
     const axisLabel3 = axis === "x" ? "X" : "Y";
     let desc = `${axisLabel3}-Axis`;
-    if (type === "range" && range3) {
+    if (type === "range" && dateRange) {
+      desc += ` range [${dateRange[0]}, ${dateRange[1]}]`;
+    } else if (type === "range" && range3) {
       desc += ` range [${range3[0]}, ${range3[1]}]`;
+    } else if (dateValue) {
+      desc += ` @ ${dateValue}`;
     } else if (value != null) {
       desc += ` @ ${value}`;
     }
@@ -118883,7 +118972,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.6.0`,
+%cVersion: 0.7.0-beta.1`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
@@ -118928,8 +119017,43 @@ var HAAgCharts = class extends HTMLElement {
     if (this.phase === "init") {
       this.chartInstance = AgCharts.create(buildSeriesConfig(this, hass));
       this.phase = "ready";
+      this.startCrosslineTimer();
     }
     this.updateData(hass);
+  }
+  disconnectedCallback() {
+    this.stopCrosslineTimer();
+  }
+  hasDynamicCrosslines() {
+    return (this.config?.crosslines ?? []).some(
+      (c4) => c4.dateValue === "now" || c4.dateRange?.includes("now")
+    );
+  }
+  startCrosslineTimer() {
+    this.stopCrosslineTimer();
+    if (!this.hasDynamicCrosslines())
+      return;
+    const MS_30_MIN = 30 * 60 * 1e3;
+    const now = Date.now();
+    const nextTick = Math.ceil(now / MS_30_MIN) * MS_30_MIN;
+    const initialDelay = nextTick - now;
+    this.nowTimerId = setTimeout(() => {
+      this.refreshCrosslines();
+      this.nowTimerId = setInterval(() => this.refreshCrosslines(), MS_30_MIN);
+    }, initialDelay);
+  }
+  stopCrosslineTimer() {
+    if (this.nowTimerId != null) {
+      clearTimeout(this.nowTimerId);
+      clearInterval(this.nowTimerId);
+      this.nowTimerId = void 0;
+    }
+  }
+  refreshCrosslines() {
+    const delta4 = buildCrossLinesDelta(this);
+    if (delta4) {
+      this.chartInstance?.updateDelta({ axes: delta4 });
+    }
   }
   async updateData(hass) {
     const data = await updateData(this, hass);
