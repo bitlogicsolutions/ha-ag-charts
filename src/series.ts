@@ -238,29 +238,33 @@ function generateSeriesOpts(
     return seriesOpts;
 }
 
-function resolveDateKeyword(keyword: string): number {
+function resolveDateKeyword(keyword: string): Date {
     const now = new Date();
 
     if (keyword === 'now') {
         const rounded = new Date(now);
         rounded.setMinutes(Math.floor(rounded.getMinutes() / 30) * 30, 0, 0);
-        return rounded.getTime();
+        return rounded;
     }
 
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if (keyword === 'today') return today.getTime();
-    if (keyword === 'yesterday') return today.getTime() - 86_400_000;
-    if (keyword === 'tomorrow') return today.getTime() + 86_400_000;
+    if (keyword === 'today') return today;
+    if (keyword === 'yesterday') return new Date(today.getTime() - 86_400_000);
+    if (keyword === 'tomorrow') return new Date(today.getTime() + 86_400_000);
 
     const match = keyword.match(/^(today|yesterday|tomorrow)([+-]\d+)$/);
     if (match) {
         const base = resolveDateKeyword(match[1]);
         const offset = parseInt(match[2]) * 86_400_000;
-        return base + offset;
+        return new Date(base.getTime() + offset);
     }
 
-    return Number(keyword);
+    return new Date(Number(keyword));
+}
+
+function camelToKebab(s: string): string {
+    return s.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
 }
 
 function buildCrossLines(crosslines: CrossLine[]) {
@@ -288,7 +292,7 @@ function buildCrossLines(crosslines: CrossLine[]) {
         if (cl.label) {
             result.label = {
                 text: cl.label,
-                ...(cl.labelPosition ? { position: cl.labelPosition } : {}),
+                ...(cl.labelPosition ? { position: camelToKebab(cl.labelPosition) } : {}),
             };
         }
 

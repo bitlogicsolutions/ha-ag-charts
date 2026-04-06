@@ -116937,22 +116937,25 @@ function resolveDateKeyword(keyword) {
   if (keyword === "now") {
     const rounded = new Date(now);
     rounded.setMinutes(Math.floor(rounded.getMinutes() / 30) * 30, 0, 0);
-    return rounded.getTime();
+    return rounded;
   }
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (keyword === "today")
-    return today.getTime();
+    return today;
   if (keyword === "yesterday")
-    return today.getTime() - 864e5;
+    return new Date(today.getTime() - 864e5);
   if (keyword === "tomorrow")
-    return today.getTime() + 864e5;
+    return new Date(today.getTime() + 864e5);
   const match = keyword.match(/^(today|yesterday|tomorrow)([+-]\d+)$/);
   if (match) {
     const base = resolveDateKeyword(match[1]);
     const offset = parseInt(match[2]) * 864e5;
-    return base + offset;
+    return new Date(base.getTime() + offset);
   }
-  return Number(keyword);
+  return new Date(Number(keyword));
+}
+function camelToKebab(s3) {
+  return s3.replace(/[A-Z]/g, (m2) => "-" + m2.toLowerCase());
 }
 function buildCrossLines(crosslines) {
   return crosslines.map((cl) => {
@@ -116980,7 +116983,7 @@ function buildCrossLines(crosslines) {
     if (cl.label) {
       result.label = {
         text: cl.label,
-        ...cl.labelPosition ? { position: cl.labelPosition } : {}
+        ...cl.labelPosition ? { position: camelToKebab(cl.labelPosition) } : {}
       };
     }
     return result;
