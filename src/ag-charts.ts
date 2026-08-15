@@ -31,7 +31,7 @@ ModuleRegistry.registerModules([
 ]);
 
 console.info(
-    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.7.0`,
+    `%cAG CHARTS HASS INTEGRATION\n%cVersion: 0.8.0`,
     'color: white; background: blue; font-weight: bold;',
     'color: blue; background: white; font-weight: bold;',
     ''
@@ -46,6 +46,7 @@ class HAAgCharts extends HTMLElement {
 
     private phase: 'init' | 'ready' = 'init';
     private nowTimerId?: ReturnType<typeof setTimeout>;
+    private latestHass?: Hass;
 
     constructor() {
         super();
@@ -85,6 +86,8 @@ class HAAgCharts extends HTMLElement {
     }
 
     set hass(hass: Hass) {
+        this.latestHass = hass;
+
         if (this.phase === 'init') {
             this.chartInstance = AgCharts.create(buildSeriesConfig(this, hass));
             this.phase = 'ready';
@@ -100,7 +103,7 @@ class HAAgCharts extends HTMLElement {
 
     private hasDynamicCrosslines(): boolean {
         return (this.config?.crosslines ?? []).some(
-            c => c.dateValue === 'now' || c.dateRange?.includes('now')
+            c => c.dateValue === 'now' || c.dateRange?.includes('now') || c.entity != null
         );
     }
 
@@ -128,7 +131,7 @@ class HAAgCharts extends HTMLElement {
     }
 
     private refreshCrosslines(): void {
-        const delta = buildCrossLinesDelta(this);
+        const delta = buildCrossLinesDelta(this, this.latestHass);
         if (delta) {
             this.chartInstance?.updateDelta({ axes: delta });
         }

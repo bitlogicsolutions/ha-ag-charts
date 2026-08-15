@@ -70,6 +70,9 @@ export interface CrossLine {
     range?: [number, number];
     dateValue?: string;
     dateRange?: [string, string];
+    entity?: string;
+    startAttribute?: string;
+    endAttribute?: string;
     stroke?: string;
     strokeWidth?: number;
     fill?: string;

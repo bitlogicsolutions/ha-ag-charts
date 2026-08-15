@@ -116800,8 +116800,8 @@ function buildSeriesConfig(context, hass) {
     }
     const crosslines = context.config?.crosslines ?? [];
     if (crosslines.length > 0) {
-      const yCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "y"));
-      const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"));
+      const yCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "y"), hass);
+      const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"), hass);
       if (yCrossLines.length > 0) {
         const firstYKey = axisConfigs[0]?.key;
         if (firstYKey && axes[firstYKey]) {
@@ -116957,10 +116957,27 @@ function resolveDateKeyword(keyword) {
 function camelToKebab(s3) {
   return s3.replace(/[A-Z]/g, (m2) => "-" + m2.toLowerCase());
 }
-function buildCrossLines(crosslines) {
-  return crosslines.map((cl) => {
+function resolveEntityRange(cl, hass) {
+  const state = cl.entity ? hass?.states[cl.entity] : void 0;
+  const startVal = state?.attributes?.[cl.startAttribute ?? "start_time"];
+  const endVal = state?.attributes?.[cl.endAttribute ?? "end_time"];
+  if (typeof startVal !== "string" || typeof endVal !== "string")
+    return null;
+  const start2 = new Date(startVal);
+  const end3 = new Date(endVal);
+  if (isNaN(start2.getTime()) || isNaN(end3.getTime()))
+    return null;
+  return [start2, end3];
+}
+function buildCrossLines(crosslines, hass) {
+  const results = crosslines.map((cl) => {
     const result = { type: cl.type };
-    if (cl.type === "range" && cl.dateRange) {
+    if (cl.entity && cl.type === "range" && cl.axis === "x") {
+      const range3 = resolveEntityRange(cl, hass);
+      if (!range3)
+        return null;
+      result.range = range3;
+    } else if (cl.type === "range" && cl.dateRange) {
       result.range = cl.dateRange.map(resolveDateKeyword);
     } else if (cl.type === "range" && cl.range) {
       result.range = cl.range;
@@ -116988,12 +117005,13 @@ function buildCrossLines(crosslines) {
     }
     return result;
   });
+  return results.filter((r7) => r7 !== null);
 }
-function buildCrossLinesDelta(context) {
+function buildCrossLinesDelta(context, hass) {
   const crosslines = context.config?.crosslines ?? [];
   if (crosslines.length === 0)
     return null;
-  const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"));
+  const xCrossLines = buildCrossLines(crosslines.filter((c4) => c4.axis === "x"), hass);
   if (xCrossLines.length === 0)
     return null;
   return { x: { crossLines: xCrossLines } };
@@ -118975,7 +118993,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.7.0`,
+%cVersion: 0.8.0`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""
@@ -119017,6 +119035,7 @@ var HAAgCharts = class extends HTMLElement {
     }
   }
   set hass(hass) {
+    this.latestHass = hass;
     if (this.phase === "init") {
       this.chartInstance = AgCharts.create(buildSeriesConfig(this, hass));
       this.phase = "ready";
@@ -119029,7 +119048,7 @@ var HAAgCharts = class extends HTMLElement {
   }
   hasDynamicCrosslines() {
     return (this.config?.crosslines ?? []).some(
-      (c4) => c4.dateValue === "now" || c4.dateRange?.includes("now")
+      (c4) => c4.dateValue === "now" || c4.dateRange?.includes("now") || c4.entity != null
     );
   }
   startCrosslineTimer() {
@@ -119053,7 +119072,7 @@ var HAAgCharts = class extends HTMLElement {
     }
   }
   refreshCrosslines() {
-    const delta4 = buildCrossLinesDelta(this);
+    const delta4 = buildCrossLinesDelta(this, this.latestHass);
     if (delta4) {
       this.chartInstance?.updateDelta({ axes: delta4 });
     }

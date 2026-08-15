@@ -82,8 +82,8 @@ export function buildSeriesConfig(context: Context, hass: Hass) {
         // Apply crosslines to axes
         const crosslines = context.config?.crosslines ?? [];
         if (crosslines.length > 0) {
-            const yCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'y'));
-            const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'));
+            const yCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'y'), hass);
+            const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'), hass);
 
             if (yCrossLines.length > 0) {
                 // Apply to first y-axis
@@ -267,11 +267,28 @@ function camelToKebab(s: string): string {
     return s.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
 }
 
-function buildCrossLines(crosslines: CrossLine[]) {
-    return crosslines.map(cl => {
+function resolveEntityRange(cl: CrossLine, hass?: Hass): [Date, Date] | null {
+    const state = cl.entity ? hass?.states[cl.entity] : undefined;
+    const startVal = state?.attributes?.[cl.startAttribute ?? 'start_time'];
+    const endVal = state?.attributes?.[cl.endAttribute ?? 'end_time'];
+    if (typeof startVal !== 'string' || typeof endVal !== 'string') return null;
+
+    const start = new Date(startVal);
+    const end = new Date(endVal);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+    return [start, end];
+}
+
+function buildCrossLines(crosslines: CrossLine[], hass?: Hass) {
+    const results = crosslines.map(cl => {
         const result: any = { type: cl.type };
 
-        if (cl.type === 'range' && cl.dateRange) {
+        if (cl.entity && cl.type === 'range' && cl.axis === 'x') {
+            const range = resolveEntityRange(cl, hass);
+            if (!range) return null;
+            result.range = range;
+        } else if (cl.type === 'range' && cl.dateRange) {
             result.range = cl.dateRange.map(resolveDateKeyword);
         } else if (cl.type === 'range' && cl.range) {
             result.range = cl.range;
@@ -298,13 +315,15 @@ function buildCrossLines(crosslines: CrossLine[]) {
 
         return result;
     });
+
+    return results.filter((r): r is NonNullable<typeof r> => r !== null);
 }
 
-export function buildCrossLinesDelta(context: Context): Record<string, any> | null {
+export function buildCrossLinesDelta(context: Context, hass?: Hass): Record<string, any> | null {
     const crosslines = context.config?.crosslines ?? [];
     if (crosslines.length === 0) return null;
 
-    const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'));
+    const xCrossLines = buildCrossLines(crosslines.filter(c => c.axis === 'x'), hass);
     if (xCrossLines.length === 0) return null;
 
     return { x: { crossLines: xCrossLines } };
