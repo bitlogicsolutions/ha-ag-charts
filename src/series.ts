@@ -140,7 +140,8 @@ function generateSeriesOpts(
     const cartesianSeries = series.filter((s): s is CartesianSeries => s.type !== 'pie');
     const pieSeries = series.filter((s): s is PieSeries => s.type === 'pie');
     for (const series of cartesianSeries) {
-        const { type, entities = [], stacked, legendItemName } = series;
+        const { type, entities = [], stackGroup, legendItemName } = series;
+        const stacked = series.stacked ?? (stackGroup != null ? true : undefined);
         switch (type) {
             case 'line':
             case 'bar':
@@ -153,6 +154,7 @@ function generateSeriesOpts(
                     const optional: any = {};
                     if (entity.fill) optional.fill = entity.fill;
                     if (entity.stroke) optional.stroke = entity.stroke;
+                    if (stackGroup != null) optional.stackGroup = stackGroup;
                     if (legendItemName) {
                         optional.legendItemName = legendItemName;
                         if (legendShown) {

@@ -116840,7 +116840,8 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
   const cartesianSeries = series.filter((s3) => s3.type !== "pie");
   const pieSeries = series.filter((s3) => s3.type === "pie");
   for (const series2 of cartesianSeries) {
-    const { type, entities = [], stacked, legendItemName } = series2;
+    const { type, entities = [], stackGroup, legendItemName } = series2;
+    const stacked = series2.stacked ?? (stackGroup != null ? true : void 0);
     switch (type) {
       case "line":
       case "bar":
@@ -116855,6 +116856,8 @@ function generateSeriesOpts(context, hass, unitToAxisKey) {
             optional.fill = entity.fill;
           if (entity.stroke)
             optional.stroke = entity.stroke;
+          if (stackGroup != null)
+            optional.stackGroup = stackGroup;
           if (legendItemName) {
             optional.legendItemName = legendItemName;
             if (legendShown) {
@@ -117103,6 +117106,34 @@ async function fetchRecent(hass, entityId, start2, end3, interval, aggregation =
     return void 0;
   }
 }
+var NATIVE_STATISTICS_PERIODS = ["5minute", "hour", "day", "week", "month"];
+async function fetchStatisticsChange(hass, entityId, start2, end3, interval) {
+  const native = NATIVE_STATISTICS_PERIODS.includes(interval);
+  const intervalMs = intervalToMs(interval);
+  const alignedStart = new Date(Math.floor(start2.getTime() / intervalMs) * intervalMs);
+  const statistics = await hass.callWS({
+    type: "recorder/statistics_during_period",
+    start_time: alignedStart.toISOString(),
+    end_time: end3.toISOString(),
+    statistic_ids: [entityId],
+    period: native ? interval : "5minute",
+    types: ["change"]
+  });
+  const rows = statistics?.[entityId];
+  if (!rows || rows.length === 0) {
+    return void 0;
+  }
+  const buckets = /* @__PURE__ */ new Map();
+  for (const { start: rowStart, change } of rows) {
+    if (change == null)
+      continue;
+    const t4 = typeof rowStart === "string" ? new Date(rowStart).getTime() : rowStart;
+    const bucket = native ? t4 : Math.floor(t4 / intervalMs) * intervalMs;
+    buckets.set(bucket, (buckets.get(bucket) ?? 0) + change);
+  }
+  const dataPoints = [...buckets.entries()].sort((a3, b3) => a3[0] - b3[0]).map(([bucket, value]) => ({ start: bucket, mean: value, state: value }));
+  return dataPoints.length > 0 ? dataPoints : void 0;
+}
 async function fetchStatistics(hass, entityId, start2, end3, period = "5minute") {
   const statistics = await hass.callWS({
     type: "recorder/statistics_during_period",
@@ -117133,6 +117164,9 @@ function fetchAttributeData(hass, entityId, attribute, valueField, timestampFiel
   return dataPoints.length > 0 ? dataPoints : void 0;
 }
 async function fetchEntityData(hass, entityId, start2, end3, interval, dataSource = "auto", aggregation = "mean") {
+  if (aggregation === "change") {
+    return fetchStatisticsChange(hass, entityId, start2, end3, interval);
+  }
   if (dataSource === "history") {
     return fetchRecent(hass, entityId, start2, end3, interval, aggregation);
   }
@@ -118993,7 +119027,7 @@ moduleRegistry_exports.registerModules([
 ]);
 console.info(
   `%cAG CHARTS HASS INTEGRATION
-%cVersion: 0.8.0`,
+%cVersion: 0.9.0-beta.1`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; background: white; font-weight: bold;",
   ""

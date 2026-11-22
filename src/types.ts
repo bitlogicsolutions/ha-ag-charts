@@ -32,7 +32,13 @@ export type ConfigEntity = {
     stroke?: string;
     dataSource?: DataSource;
     interval?: '5minute' | '30minute' | 'hour' | 'day';
-    aggregation?: 'mean' | 'sum';
+    /**
+     * How samples are combined per interval. 'change' reads the statistics `change` of a
+     * cumulative (total / total_increasing) sensor, so each point is the amount used in
+     * that interval (e.g. kWh per half hour); intervals HA does not store natively
+     * ('30minute') are summed from 5-minute statistics.
+     */
+    aggregation?: 'mean' | 'sum' | 'change';
     attribute?: string;
     attributeField?: string;
     attributeTimestampField?: string;
@@ -57,6 +63,8 @@ export interface CartesianSeries {
     type: 'area' | 'bar' | 'line';
     entities: Entity[];
     stacked?: boolean;
+    /** Stack only with series sharing this name (implies stacked). */
+    stackGroup?: string;
     legendItemName?: string;
     timeUnit?: 'continuous' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'ordinal';
     minY?: number;
@@ -105,6 +113,7 @@ export type Hass = {
         end_time: string;
         statistic_ids: string[];
         period: string;
+        types?: string[];
     }): Promise<object>;
     states: { [key: string]: HassEntity };
 };

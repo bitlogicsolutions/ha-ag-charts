@@ -111,6 +111,52 @@ async function fetchRecent(
     }
 }
 
+const NATIVE_STATISTICS_PERIODS = ['5minute', 'hour', 'day', 'week', 'month'];
+
+type ChangeStatistics = { start: string | number; change?: number | null };
+
+/**
+ * Per-interval change of a cumulative sensor, from long/short-term statistics. Intervals
+ * HA does not store natively (e.g. '30minute') are summed from 5-minute statistics, so
+ * the result is exact rather than an average of state samples.
+ */
+async function fetchStatisticsChange(
+    hass: Hass,
+    entityId: string,
+    start: Date,
+    end: Date,
+    interval: string
+): Promise<DataPoint[] | undefined> {
+    const native = NATIVE_STATISTICS_PERIODS.includes(interval);
+    const intervalMs = intervalToMs(interval);
+    const alignedStart = new Date(Math.floor(start.getTime() / intervalMs) * intervalMs);
+    const statistics = (await hass.callWS({
+        type: 'recorder/statistics_during_period',
+        start_time: alignedStart.toISOString(),
+        end_time: end.toISOString(),
+        statistic_ids: [entityId],
+        period: native ? interval : '5minute',
+        types: ['change'],
+    })) as Record<string, ChangeStatistics[]>;
+    const rows = statistics?.[entityId];
+    if (!rows || rows.length === 0) {
+        return undefined;
+    }
+
+    const buckets = new Map<number, number>();
+    for (const { start: rowStart, change } of rows) {
+        if (change == null) continue;
+        const t = typeof rowStart === 'string' ? new Date(rowStart).getTime() : rowStart;
+        const bucket = native ? t : Math.floor(t / intervalMs) * intervalMs;
+        buckets.set(bucket, (buckets.get(bucket) ?? 0) + change);
+    }
+
+    const dataPoints = [...buckets.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([bucket, value]) => ({ start: bucket, mean: value, state: value }));
+    return dataPoints.length > 0 ? dataPoints : undefined;
+}
+
 export async function fetchStatistics(
     hass: Hass,
     entityId: string,
@@ -162,8 +208,13 @@ export async function fetchEntityData(
     end: Date,
     interval: string,
     dataSource: DataSource = 'auto',
-    aggregation: 'mean' | 'sum' = 'mean'
+    aggregation: 'mean' | 'sum' | 'change' = 'mean'
 ): Promise<DataPoint[] | undefined> {
+    // Change is only meaningful from statistics (cumulative sensors)
+    if (aggregation === 'change') {
+        return fetchStatisticsChange(hass, entityId, start, end, interval);
+    }
+
     // If explicitly set to history, skip statistics
     if (dataSource === 'history') {
         return fetchRecent(hass, entityId, start, end, interval, aggregation);

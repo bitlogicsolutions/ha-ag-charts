@@ -83,6 +83,18 @@ export const CONFIG_SCHEMA = {
                                 options: ['auto', 'statistics', 'history', 'attribute'],
                                 description: 'The data source type',
                             },
+                            interval: {
+                                type: 'select',
+                                options: ['5minute', '30minute', 'hour', 'day'],
+                                description:
+                                    'Interval for this entity (overrides the card interval)',
+                            },
+                            aggregation: {
+                                type: 'select',
+                                options: ['mean', 'sum', 'change'],
+                                description:
+                                    'How values are combined per interval; change = amount used per interval of a cumulative (energy) sensor, from statistics',
+                            },
                             attribute: {
                                 type: 'string',
                                 description:
@@ -103,6 +115,10 @@ export const CONFIG_SCHEMA = {
                 stacked: {
                     type: 'boolean',
                     description: 'Whether to stack the series (for area and bar charts)',
+                },
+                stackGroup: {
+                    type: 'string',
+                    description: 'Stack only with series sharing this group name (implies stacked)',
                 },
                 minY: {
                     type: 'number',
